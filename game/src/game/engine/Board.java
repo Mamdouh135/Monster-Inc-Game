@@ -17,7 +17,7 @@ public class Board {
 	// ArrayList containing the original cards read from CSV
 	
 	
-	private static ArrayList<Card> cards;
+	public static ArrayList<Card> cards;
 	// ArrayList containing the current available cards
 	
 	
