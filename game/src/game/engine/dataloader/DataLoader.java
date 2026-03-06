@@ -141,7 +141,7 @@ public class DataLoader {
 				String[] data = line.split(",");
 				if (data.length == 3) {
 					String name = data[0];
-					String role = data[1];
+					Role role = Role.valueOf(data[1]);
 					int energy = Integer.parseInt(data[2]);
 					cells.add(new DoorCell(name, role, energy));
 
@@ -152,9 +152,9 @@ public class DataLoader {
 					String name = data[0];
 					int effect = Integer.parseInt(data[1]);
 					if (effect > 0) {
-						cells.add(ConveyorBelt(name, effect));
+						cells.add(new ConveyorBelt(name, effect));
 					} else {
-						cells.add(ContaminationSock(name, effect));
+						cells.add(new ContaminationSock(name, effect));
 					}
 				}
 			}
