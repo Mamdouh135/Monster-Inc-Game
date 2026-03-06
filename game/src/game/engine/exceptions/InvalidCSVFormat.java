@@ -1,7 +1,7 @@
 package game.engine.exceptions;
 
-public class InvalidCSVFormat extends Exception {
-	static final String MSG = "Invalid input detected while reading csv file, input = \n";
+public class InvalidCSVFormat extends GameActionException {
+	private static final String MSG = "Invalid input detected while reading csv file, input = \n";
 	private String inputLine;
 
 	public InvalidCSVFormat(String inputLine) {

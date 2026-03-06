@@ -31,7 +31,7 @@ public class Game {
 
 		this.player = selectRandomMonsterByRole(playerRole);
 
-		// Using the DataLoader class to read the monsters [cite: 378]
+		// Using the DataLoader class to read the monsters 
 		this.allMonsters = DataLoader.readMonsters();
 
 		// randomly selecting opponent based on the opposite to player's chosen

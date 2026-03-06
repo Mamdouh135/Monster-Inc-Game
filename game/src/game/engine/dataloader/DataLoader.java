@@ -11,126 +11,98 @@ import game.engine.cards.*;
 import game.engine.cells.*;
 
 public class DataLoader {
-	public static String CARDS_FILE_NAME = "cards.csv"; // A String
-																// containing
-																// the name of
-																// the card’s
-																// csv file.
-	public static String CELLS_FILE_NAME = "cells.csv"; // A String
-																// containing
-																// the name of
-																// the cell’s
-																// csv file.
-	public static String MONSTERS_FILE_NAME = "monsters.csv";// A String
-																	// containing
-																	// the name
-																	// of the
-																	// monster’s
-																	// csv file.
 
+	// --- Attributes ---
+	// Initialized once and accessed at class level as constants
+	private static final String CARDS_FILE_NAME = "cards.csv";
+	private static final String CELLS_FILE_NAME = "cells.csv";
+	private static final String MONSTERS_FILE_NAME = "monsters.csv";
+
+	// --- Methods ---
+
+	// 1. Reads the MONSTERS_FILE_NAME CSV
+	public static ArrayList<Monster> readMonsters() throws IOException {
+		ArrayList<Monster> monsters = new ArrayList<>();
+
+		try (BufferedReader br = new BufferedReader(new FileReader(
+				MONSTERS_FILE_NAME))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				String[] data = line.split(",");
+
+				// Format: (monsterType, name, description, role, energy) [cite:
+				// 396]
+				String monsterType = data[0];
+				String name = data[1];
+				String description = data[2];
+				Role role = Role.valueOf(data[3]);
+				int energy = Integer.parseInt(data[4]);
+
+				switch (monsterType.trim().toUpperCase()) {
+				case "DASHER":
+					monsters.add(new Dasher(name, description, role, energy));
+					break;
+				case "DYNAMO":
+					monsters.add(new Dynamo(name, description, role, energy));
+					break;
+				case "MULTITASKER":
+					monsters.add(new MultiTasker(name, description, role,
+							energy));
+					break;
+				case "SCHEMER":
+					monsters.add(new Schemer(name, description, role, energy));
+					break;
+				}
+			}
+		}
+		return monsters;
+	}
+
+	// 2. Reads the CARDS_FILE_NAME CSV
 	public static ArrayList<Card> readCards() throws IOException {
-
 		ArrayList<Card> cards = new ArrayList<>();
+
 		try (BufferedReader br = new BufferedReader(new FileReader(
 				CARDS_FILE_NAME))) {
 			String line;
 			while ((line = br.readLine()) != null) {
-				// split by comma
 				String[] data = line.split(",");
-				// Extract data based on the format :((cardType, name,
-				// description, rarity)) as basic,
-				// after that we check based on each card what extra info we
-				// need to take;
-				String cardType = data[0];
+
+				String cardType = data[0].trim().toUpperCase();
 				String name = data[1];
 				String description = data[2];
 				int rarity = Integer.parseInt(data[3]);
-				// Switch based on the specific type of card to handle the extra
-				// columns correctly
+
+				// Format varies based on the cardType
 				switch (cardType) {
-				case "SwapperCard":
-					// (cardType, name, description, rarity)
+				case "SWAPPER":
 					cards.add(new SwapperCard(name, description, rarity));
 					break;
-
-				case "ShieldCard":
-					// (cardType, name, description, rarity)
+				case "SHIELD":
 					cards.add(new ShieldCard(name, description, rarity));
 					break;
-
-				case "EnergyStealCard":
-					// (cardType, name, description, rarity, energy)
+				case "ENERGYSTEAL":
 					int energy = Integer.parseInt(data[4]);
 					cards.add(new EnergyStealCard(name, description, rarity,
 							energy));
 					break;
-
-				case "StartOverCard":
-					// (cardType, name, description, rarity, lucky)
+				case "STARTOVER":
 					boolean lucky = Boolean.parseBoolean(data[4]);
 					cards.add(new StartOverCard(name, description, rarity,
 							lucky));
 					break;
-
-				case "ConfusionCard":
-					// (cardType, name, description, rarity, duration)
+				case "CONFUSION":
 					int duration = Integer.parseInt(data[4]);
 					cards.add(new ConfusionCard(name, description, rarity,
 							duration));
 					break;
 				}
-
 			}
-			br.close();
 		}
 		return cards;
-
 	}
 
-	public static ArrayList<Monster> readMonsters() throws IOException {
-		ArrayList<Monster> monsters = new ArrayList<>();
-
-		// Open the file. (Assumes the file is right outside the src folder )
-		try (BufferedReader br = new BufferedReader(new FileReader(
-				MONSTERS_FILE_NAME))) {
-			String line;
-
-			// Read line by line
-			while ((line = br.readLine()) != null) {
-				// Split by comma
-				String[] data = line.split(",");
-
-				// Extract data based on the format: (monsterType, name,
-				// description, role, energy)
-				String monsterType = data[0];
-				String name = data[1];
-				String description = data[2];
-				Role role = Role.valueOf(data[3]); // Converts String to the
-													// Enum
-				int energy = Integer.parseInt(data[4]);
-
-				// Create the specific subclass based on monsterType
-				switch (monsterType) {
-				case "Dasher":
-					monsters.add(new Dasher(name, description, role, energy));
-					break;
-				case "Dynamo":
-					monsters.add(new Dynamo(name, description, role, energy));
-					break;
-				case "MultiTasker":
-					monsters.add(new MultiTasker(name, description, role,
-							energy));
-					break;
-				case "Schemer":
-					monsters.add(new Schemer(name, description, role, energy));
-					break;
-				}
-			}
-			br.close();
-		}
-		return monsters;
-	}
-
+	// 3. Reads the CELLS_FILE_NAME CSV [cite: 377]
 	public static ArrayList<Cell> readCells() throws IOException {
 		ArrayList<Cell> cells = new ArrayList<>();
 
@@ -139,30 +111,29 @@ public class DataLoader {
 			String line;
 			while ((line = br.readLine()) != null) {
 				String[] data = line.split(",");
+
+				// DoorCell format: (name, role, energy)
 				if (data.length == 3) {
 					String name = data[0];
 					Role role = Role.valueOf(data[1]);
 					int energy = Integer.parseInt(data[2]);
 					cells.add(new DoorCell(name, role, energy));
-
 				}
-				// the easy part is that each type has his own length, easier
-				// than above in readCards for instance
-				if (data.length == 2) {
+				// Transport Cells format: (name, effect)
+				else if (data.length == 2) {
 					String name = data[0];
 					int effect = Integer.parseInt(data[1]);
+
+					// Positive effect (Conveyor Belt) or negative effect
+					// (Contamination Sock) [cite: 392]
 					if (effect > 0) {
 						cells.add(new ConveyorBelt(name, effect));
-					} else {
+					} else if (effect < 0) {
 						cells.add(new ContaminationSock(name, effect));
 					}
 				}
 			}
-			br.close();
 		}
-		
 		return cells;
-
 	}
-
 }
