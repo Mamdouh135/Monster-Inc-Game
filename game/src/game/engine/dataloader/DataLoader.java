@@ -11,17 +11,17 @@ import game.engine.cards.*;
 import game.engine.cells.*;
 
 public class DataLoader {
-	public static final String CARDS_FILE_NAME = "cards.csv"; // A String
+	public static String CARDS_FILE_NAME = "cards.csv"; // A String
 																// containing
 																// the name of
 																// the card’s
 																// csv file.
-	public static final String CELLS_FILE_NAME = "cells.csv"; // A String
+	public static String CELLS_FILE_NAME = "cells.csv"; // A String
 																// containing
 																// the name of
 																// the cell’s
 																// csv file.
-	public static final String MONSTERS_FILE_NAME = "monsters.csv";// A String
+	public static String MONSTERS_FILE_NAME = "monsters.csv";// A String
 																	// containing
 																	// the name
 																	// of the
