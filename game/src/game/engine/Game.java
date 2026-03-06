@@ -1,4 +1,5 @@
 package game.engine;
+
 import game.engine.cards.Card;
 import java.util.ArrayList;
 import java.io.IOException;
@@ -29,10 +30,10 @@ public class Game {
 		// creating the baord with the loaded cards from the csv
 		this.board = new Board(DataLoader.readCards());
 
-		this.player = selectRandomMonsterByRole(playerRole);
-
-		// Using the DataLoader class to read the monsters 
+		// Using the DataLoader class to read the monsters
 		this.allMonsters = DataLoader.readMonsters();
+
+		this.player = selectRandomMonsterByRole(playerRole);
 
 		// randomly selecting opponent based on the opposite to player's chosen
 		// role
