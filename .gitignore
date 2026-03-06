@@ -1,0 +1,22 @@
+# --- Eclipse Metadata ---
+.metadata
+.project
+.classpath
+.settings/
+*.launch
+
+# --- Build Outputs ---
+bin/
+target/
+build/
+*.class
+*.jar
+*.war
+*.ear
+
+# --- OS/System Files ---
+.DS_Store
+Thumbs.db
+
+# --- Log files ---
+*.log
