@@ -81,6 +81,7 @@ public class DataLoader {
 				}
 
 			}
+			br.close();
 		}
 		return cards;
 
@@ -125,6 +126,7 @@ public class DataLoader {
 					break;
 				}
 			}
+			br.close();
 		}
 		return monsters;
 	}
@@ -156,7 +158,9 @@ public class DataLoader {
 					}
 				}
 			}
+			br.close();
 		}
+		
 		return cells;
 
 	}
