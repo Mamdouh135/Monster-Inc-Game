@@ -1,5 +1,7 @@
 package game.engine;
 import game.engine.cards.Card;
+import game.engine.cells.Cell;
+import game.engine.monsters.Monster;
 
 import java.util.ArrayList; 
 public class Board {
