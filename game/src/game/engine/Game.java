@@ -1,4 +1,5 @@
 package game.engine;
+import game.engine.cards.Card;
 
 import java.util.ArrayList;
 import java.io.IOException;

@@ -1,4 +1,6 @@
 package game.engine;
+import game.engine.cards.Card;
+
 import java.util.ArrayList; 
 public class Board {
 	private Cell[][] boardCells;
