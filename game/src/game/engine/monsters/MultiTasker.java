@@ -3,10 +3,10 @@ import game.engine.*;
 public class MultiTasker extends Monster {
      private int normalSpeedTurns;
 
-	public MultiTasker(String name, String description, Role originalRole,
+	public MultiTasker(String name, String description, Role role,
 			int energy) {
-		super(name, description, originalRole, energy);
-		
+		super(name, description, role, energy);
+		this.normalSpeedTurns = 0;
 	}
 
 	public int getNormalSpeedTurns() {
