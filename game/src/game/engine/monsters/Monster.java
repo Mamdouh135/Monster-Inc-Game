@@ -57,13 +57,12 @@ public abstract class Monster implements Comparable<Monster> {
 
 	public void setPosition(int position) {
 		if (position < 0) {
-            // "don't fall below zero" rule 
-            this.position = 0; 
-        } else {
-            // "loop around" rule 
-            // Using Constants.BOARD_SIZE (which is 100) 
-            this.position = position % Constants.BOARD_SIZE; 
-        }
+
+			this.position = 0;
+		} else {
+
+			this.position = position % Constants.BOARD_SIZE;
+		}
 	}
 
 	public boolean isFrozen() {

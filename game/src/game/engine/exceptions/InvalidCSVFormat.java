@@ -13,10 +13,10 @@ public class InvalidCSVFormat extends IOException {
 	}
 
 	public InvalidCSVFormat(String message, String inputLine) {
-		// Calling the constructor of the super class with a customized message
+		
 
 		super(message);
-		// Setting the inputLine with the given parameter [cite: 509]
+	
 		this.inputLine = inputLine;
 	}
 
