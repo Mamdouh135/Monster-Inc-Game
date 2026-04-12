@@ -4,7 +4,7 @@ public abstract class GameActionException extends Exception {
 	public GameActionException(){
 		super();
 	}
-	GameActionException(String message){
+	public GameActionException(String message){
 		super(message);
 	}
 	
