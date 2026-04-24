@@ -56,4 +56,10 @@ public class Board {
 		return boardCells[pair[0]][pair[1]];
 	}
 
+	private void setCell(int index, Cell cell){
+		int[] pair = indexToRowCol(index);
+		boardCells[pair[0]][pair[1]] = cell;
+	}
+
+	
 }
