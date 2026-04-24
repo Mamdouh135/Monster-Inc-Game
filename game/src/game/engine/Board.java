@@ -50,4 +50,10 @@ public class Board {
 		int[] pair = new int[]{row,col};
 		return pair;
 	}
+
+	private Cell getCell(int index){
+		int[] pair = indexToRowCol(index);
+		return boardCells[pair[0]][pair[1]];
+	}
+
 }
