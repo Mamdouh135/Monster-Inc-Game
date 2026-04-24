@@ -42,4 +42,12 @@ public class Board {
 	public static void setCards(ArrayList<Card> cards) {
 		Board.cards = cards;
 	}
+
+	private int[] indexToRowCol(int index){
+		int col = index%10;
+		int row = index/10;
+		if(row%2 == 1) col = 9 - col;
+		int[] pair = new int[]{row,col};
+		return pair;
+	}
 }
