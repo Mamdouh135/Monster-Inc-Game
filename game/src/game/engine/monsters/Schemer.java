@@ -31,8 +31,8 @@ public class Schemer extends Monster {
 	 }
 	 
 	 public void setEnergy(int energy){
-		 int change = energy - this.getEnergy()+ 10;
-			super.setEnergy(this.getEnergy()+change);
+		
+			super.setEnergy(energy+10);
 
 	 }
 	
