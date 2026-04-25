@@ -2,8 +2,10 @@ package game.engine;
 
 import java.util.ArrayList;
 import java.util.Collections;
+
 import game.engine.cards.Card;
 import game.engine.cells.*;
+import game.engine.exceptions.InvalidMoveException;
 import game.engine.monsters.Monster;
 
 public class Board {
@@ -143,6 +145,30 @@ public class Board {
 			return cards.remove(0);
 		}
 	}
+
+	public void moveMonster(Monster currentMonster, int roll, Monster opponentMonster) throws InvalidMoveException{
+		int newPos = (currentMonster.getPosition() + roll)%100;
+		int oldPos = currentMonster.getPosition();
+		if(newPos == opponentMonster.getPosition())
+		{
+			throw new InvalidMoveException();
+		}
+		currentMonster.setPosition(newPos);
+		Cell c = getCell(newPos);
+		if(currentMonster.getConfusionTurns() > 0)
+		{
+			int confusionTurns = currentMonster.getConfusionTurns();
+			currentMonster.setConfusionTurns(confusionTurns-1);
+			opponentMonster.setConfusionTurns(confusionTurns-1);
+		}
+		c.onLand(currentMonster, opponentMonster);
+		if(currentMonster.getPosition() == opponentMonster.getPosition())
+		{
+			currentMonster.setPosition(oldPos);
+			throw new InvalidMoveException();
+		}
+	}
+
 }
 	
 
