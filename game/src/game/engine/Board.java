@@ -133,7 +133,16 @@ public class Board {
 		Collections.shuffle(cards);
 	}
 
-	
+	public static Card drawCard(){
+		if(!cards.isEmpty())
+		{
+			return cards.remove(0); 
+		}
+		else{
+			reloadCards();
+			return cards.remove(0);
+		}
+	}
 }
 	
 
