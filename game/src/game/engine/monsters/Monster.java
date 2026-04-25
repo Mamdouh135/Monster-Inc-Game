@@ -50,8 +50,14 @@ public abstract class Monster implements Comparable<Monster> {
 	public int getEnergy() {
 		return energy;
 	}
-
+	
 	public void setEnergy(int energy) {
+		int change = energy - this.getEnergy();
+	    
+	    if (change == 0) {
+	        return; // Do nothing if the energy isn't actually changing!
+	    }
+		
 		this.energy = Math.max(Constants.MIN_ENERGY, energy);
 	}
 
@@ -62,6 +68,7 @@ public abstract class Monster implements Comparable<Monster> {
 	public void setPosition(int position) {
 		if(position < 0)
 			this.position=0;
+		else 
 		this.position = position % Constants.BOARD_SIZE;
 	}
 	
@@ -107,7 +114,7 @@ public abstract class Monster implements Comparable<Monster> {
 	}
 	
 	
-	public void alterEnergy(int energy){
+	public final void alterEnergy(int energy){
 		if(energy < 0 && this.isShielded())
 			this.setShielded(false);
 		else

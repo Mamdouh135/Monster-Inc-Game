@@ -16,6 +16,7 @@ public class Dynamo extends Monster {
 	
 	public void setEnergy(int energy) {
 		int change = energy - this.getEnergy();
+
 		int doubleChange=2*change;
 		super.setEnergy(this.getEnergy()+doubleChange);
 		

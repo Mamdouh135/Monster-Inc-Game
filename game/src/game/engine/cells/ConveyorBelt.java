@@ -8,10 +8,7 @@ public class ConveyorBelt extends TransportCell {
 	}
 
 
-	public void transport(Monster monster){
-		monster.move(Math.abs(this.getEffect()));
-		
-	}
+
 	
 	
 

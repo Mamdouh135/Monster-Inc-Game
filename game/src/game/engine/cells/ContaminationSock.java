@@ -23,7 +23,10 @@ public class ContaminationSock extends TransportCell implements CanisterModifier
 	
 
 	public void transport(Monster monster){
-		monster.move(-1*Math.abs(this.getEffect()));
+	if(monster.isShielded())
+		monster.setShielded(false);
+		
+		monster.setPosition(monster.getPosition()-Math.abs(this.getEffect()));
 		
 	}
 	

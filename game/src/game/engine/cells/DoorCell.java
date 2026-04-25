@@ -33,17 +33,17 @@ public class DoorCell extends Cell implements CanisterModifier {
 		this.activated = isActivated;
 	}
 	
-	public void modifyCanisterEnergy(Monster monster, int canisterValue){
-		monster.alterEnergy(canisterValue);
-		
+	public void modifyCanisterEnergy(Monster monster, int canisterValue) {
+	    
+	    if (monster.getRole().equals(this.getRole())){
+	        monster.alterEnergy(canisterValue);
+	    } 
+
+	    else {
+	        monster.alterEnergy(-1 * canisterValue);
+	    }
 	}
-	private void RoleAndModify(Monster monster,boolean sameRole,int energy){
-		if(sameRole)
-			this.modifyCanisterEnergy(monster,energy);
-		
-		else
-			this.modifyCanisterEnergy(monster, -1*energy);
-	}
+	
 	
 	private boolean energyChanged (Monster monster,int beforeEnergy,boolean currentChangeStatus){
 		if(monster.getEnergy()!=beforeEnergy)
@@ -60,13 +60,13 @@ public class DoorCell extends Cell implements CanisterModifier {
         if(!(this.isActivated())){
         	boolean energyActuallyChanged=false;
         	int beforeEnergy=this.getMonster().getEnergy();
-        	 boolean sameRole = this.getMonster().getRole()==this.getRole();
-        	this.RoleAndModify(this.getMonster(), sameRole,this.getEnergy());
+        	this.modifyCanisterEnergy(this.getMonster(), this.getEnergy());
         	energyActuallyChanged=this.energyChanged(this.getMonster(),beforeEnergy,energyActuallyChanged);
         	for (Monster stationedMonster : Board.getStationedMonsters()){
-        		if(stationedMonster.getRole()==this.getMonster().getRole()){
+        		
+        		if(stationedMonster.getRole().equals(this.getMonster().getRole())){
         			beforeEnergy=stationedMonster.getEnergy();
-        			this.RoleAndModify(stationedMonster, sameRole,this.getEnergy());
+        	this.modifyCanisterEnergy(stationedMonster, this.getEnergy());
         			energyActuallyChanged=this.energyChanged(stationedMonster,beforeEnergy,energyActuallyChanged);
         		}    
         	}
@@ -74,10 +74,11 @@ public class DoorCell extends Cell implements CanisterModifier {
         	this.setActivated(true);
         	
 }
-        
+      
 	
 	
 }
+
 
 
 
