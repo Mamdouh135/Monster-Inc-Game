@@ -52,11 +52,7 @@ public abstract class Monster implements Comparable<Monster> {
 	}
 	
 	public void setEnergy(int energy) {
-		int change = energy - this.getEnergy();
-	    
-	    if (change == 0) {
-	        return; // Do nothing if the energy isn't actually changing!
-	    }
+		
 		
 		this.energy = Math.max(Constants.MIN_ENERGY, energy);
 	}

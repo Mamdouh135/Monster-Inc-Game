@@ -19,16 +19,18 @@ public class Game {
 	
 	public Game(Role playerRole) throws IOException {
 		this.board = new Board(DataLoader.readCards());
-		
 		this.allMonsters = DataLoader.readMonsters();
 		
 		this.player = selectRandomMonsterByRole(playerRole);
 		this.opponent = selectRandomMonsterByRole(playerRole == Role.SCARER ? Role.LAUGHER : Role.SCARER);
 		this.current = player;
-		ArrayList<Monster> copy = new ArrayList<>(allMonsters);
-		copy.remove(player);
-		copy.remove(opponent);
-		Board.setStationedMonsters(copy);
+		
+		// THE FIX: Remove them directly from the allMonsters list!
+		this.allMonsters.remove(this.player);
+		this.allMonsters.remove(this.opponent);
+		
+		// Pass the cleaned allMonsters list to the Board
+		Board.setStationedMonsters(this.allMonsters);
 		this.board.initializeBoard(DataLoader.readCells());
 	}
 	

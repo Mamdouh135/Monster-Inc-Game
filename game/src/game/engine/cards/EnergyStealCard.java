@@ -18,25 +18,28 @@ public class EnergyStealCard extends Card implements CanisterModifier {
 
 	@Override
 	public void modifyCanisterEnergy(Monster monster, int canisterValue) {
-		
-	
-		monster.setEnergy(monster.getEnergy()-1*canisterValue);
+		// Use alterEnergy to properly respect shields and Dynamo passives!
+		monster.alterEnergy(canisterValue);
 	}
-	public  void performAction(Monster player, Monster opponent){
 	
-		if(!opponent.isShielded()){
+	public void performAction(Monster player, Monster opponent) {
+		// 1. If the opponent has a shield, they block the steal and lose their shield
+		if (opponent.isShielded()) {
+			opponent.setShielded(false);
+		} 
+		// 2. If they don't have a shield, steal the energy!
+		else {
 			int opponentEnergy = opponent.getEnergy();
 			int cardValue = this.getEnergy();
-			int actualStolen = (cardValue>opponentEnergy)?opponentEnergy:cardValue;
-			player.setEnergy(player.getEnergy()+actualStolen);
-			this.modifyCanisterEnergy(opponent, actualStolen);
+			
+			// Calculate exactly how much we can steal
+			int actualStolen = (cardValue > opponentEnergy) ? opponentEnergy : cardValue;
+			
+			// Player gains the energy
+			player.setEnergy(player.getEnergy() + actualStolen);
+			
+			// Opponent takes damage equal to the stolen amount
+			this.modifyCanisterEnergy(opponent, -1 * actualStolen);
 		}
-		
-		if(opponent.isShielded())
-			opponent.setShielded(false);
-		
-		
-		
 	}
-	
 }
