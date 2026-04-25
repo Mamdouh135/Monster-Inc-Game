@@ -102,6 +102,8 @@ public class Game {
 	}
 	
 	private boolean checkWinCondition(Monster monster){
+		if (monster == null)
+			return false;
 		if (monster.getPosition() == Constants.WINNING_POSITION && monster.getEnergy() >= Constants.WINNING_ENERGY)
 			return true;
 		else
