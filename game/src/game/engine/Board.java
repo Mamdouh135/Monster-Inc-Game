@@ -131,7 +131,7 @@ public class Board {
 	}
 
 	public void moveMonster(Monster currentMonster, int roll, Monster opponentMonster) throws InvalidMoveException{
-		int newPos = (currentMonster.getPosition() + roll) % 99;
+		int newPos = (currentMonster.getPosition() + roll) % Constants.BOARD_SIZE;
 		int oldPos = currentMonster.getPosition();
 		
 		if(newPos == opponentMonster.getPosition()) throw new InvalidMoveException();
