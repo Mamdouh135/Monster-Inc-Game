@@ -131,12 +131,12 @@ public class Board {
 	}
 
 	public void moveMonster(Monster currentMonster, int roll, Monster opponentMonster) throws InvalidMoveException{
-		int newPos = (currentMonster.getPosition() + roll) % 100;
+		int newPos = (currentMonster.getPosition() + roll) % 99;
 		int oldPos = currentMonster.getPosition();
 		
 		if(newPos == opponentMonster.getPosition()) throw new InvalidMoveException();
 		
-		currentMonster.setPosition(newPos);
+		currentMonster.move(roll);
 		Cell c = getCell(newPos);
 		
 		if(currentMonster.getConfusionTurns() > 0){
