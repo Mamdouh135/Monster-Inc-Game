@@ -130,28 +130,40 @@ public class Board {
 		return cards.remove(0);
 	}
 
-	public void moveMonster(Monster currentMonster, int roll, Monster opponentMonster) throws InvalidMoveException{
-		int newPos = (currentMonster.getPosition() + roll) % Constants.BOARD_SIZE;
+	public void moveMonster(Monster currentMonster, int roll, Monster opponentMonster) throws InvalidMoveException {
 		int oldPos = currentMonster.getPosition();
 		
-		if(newPos == opponentMonster.getPosition()) throw new InvalidMoveException();
-		
+		// 1. Let the monster handle its own movement (Supports Dasher!)
 		currentMonster.move(roll);
-		Cell c = getCell(newPos);
+		int newPos = currentMonster.getPosition(); 
 		
-		if(currentMonster.getConfusionTurns() > 0){
-			int confusionTurns = currentMonster.getConfusionTurns();
-			currentMonster.setConfusionTurns(confusionTurns - 1);
-			opponentMonster.setConfusionTurns(confusionTurns - 1);
-		}
-		
-		c.onLand(currentMonster, opponentMonster);
-		
-		if(currentMonster.getPosition() == opponentMonster.getPosition()){
-			currentMonster.setPosition(oldPos);
+		// 2. Initial collision check before triggering the cell
+		if (newPos == opponentMonster.getPosition()) {
+			currentMonster.setPosition(oldPos); // Revert the move
 			throw new InvalidMoveException();
 		}
 		
+		Cell landedCell = getCell(newPos);
+		
+		// 3. Capture the CURRENT monster's confusion status BEFORE landing
+		int playerConf = currentMonster.getConfusionTurns();
+		
+		// 4. Trigger the cell effect
+		landedCell.onLand(currentMonster, opponentMonster);
+		
+		// 5. Final collision check (in case a swapper or transport caused a collision)
+		if (currentMonster.getPosition() == opponentMonster.getPosition()) {
+			currentMonster.setPosition(oldPos); // Revert the move
+			throw new InvalidMoveException();
+		}
+		
+		// 6. THE FIX: Decrement confusion ONLY for the current monster that just moved!
+		// The opponent's confusion will be decremented on their own turn.
+		if (playerConf > 0) {
+			currentMonster.setConfusionTurns(currentMonster.getConfusionTurns() - 1);
+		}
+		
+		// 7. Synchronize the board
 		updateMonsterPositions(currentMonster, opponentMonster);
 	}
 	
