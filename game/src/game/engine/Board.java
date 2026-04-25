@@ -122,4 +122,35 @@ public class Board {
 		}
 		Collections.shuffle(cards);
 	}
+
+	public static void reloadCards(){
+		for (int i = 0; i < originalCards.size(); i++) {
+			int rare = originalCards.get(i).getRarity();
+			for (int j = 0; j < rare; j++) {
+				cards.add(originalCards.get(i));
+			}
+		}
+		Collections.shuffle(cards);
+	}
+
+	
 }
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
