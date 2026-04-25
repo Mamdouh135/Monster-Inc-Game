@@ -167,6 +167,25 @@ public class Board {
 			currentMonster.setPosition(oldPos);
 			throw new InvalidMoveException();
 		}
+		updateMonsterPositions(currentMonster, opponentMonster);
+	}
+	private void updateMonsterPositions(Monster player, Monster opponent){
+		int pIndex = player.getPosition();
+		int oIndex = opponent.getPosition();
+		for (int i = 0; i < 100; i++) {
+			Cell c = getCell(i);
+			if(i == pIndex)
+			{
+				c.setMonster(player);
+			}
+			else if(i == oIndex)
+			{
+				c.setMonster(opponent);
+			}
+			else{
+				c.setMonster(null);
+			}
+		}
 	}
 
 }
