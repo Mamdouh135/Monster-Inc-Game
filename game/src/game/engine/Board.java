@@ -1,7 +1,7 @@
 package game.engine;
 
 import java.util.ArrayList;
-
+import java.util.Collections;
 import game.engine.cards.Card;
 import game.engine.cells.*;
 import game.engine.monsters.Monster;
@@ -111,5 +111,15 @@ public class Board {
 		}
 		
 	}
-	
+
+	private void setCardsByRarity(){
+		//Setting the cards in the cards array and leaving the original array with the unique cards
+		for (int i = 0; i < originalCards.size(); i++) {
+			int rare = originalCards.get(i).getRarity();
+			for (int j = 0; j < rare; j++) {
+				cards.add(originalCards.get(i));
+			}
+		}
+		Collections.shuffle(cards);
+	}
 }
