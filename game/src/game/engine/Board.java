@@ -49,58 +49,76 @@ public class Board {
 	}
 
 	public void initializeBoard(ArrayList<Cell> specialCells){
-		ArrayList<Monster> sMonsters = getStationedMonsters();
-		int[] monsterI = Constants.MONSTER_CELL_INDICES;
-		ArrayList<Cell> monstercell = new ArrayList<Cell>();
-		
-		for (int i = 0; i < sMonsters.size(); i++) {
-			sMonsters.get(i).setPosition(monsterI[i]);
-			monstercell.add(new MonsterCell(sMonsters.get(i).getName(), sMonsters.get(i)));
-		}
-		
-		ArrayList<Cell> doors = new ArrayList<>();
-		ArrayList<Cell> conveyors = new ArrayList<>();
-		ArrayList<Cell> socks = new ArrayList<>();
-		
-		for (Cell c : specialCells) {
-			if (c instanceof DoorCell) doors.add(c);
-			else if (c instanceof ConveyorBelt) conveyors.add(c);
-			else if (c instanceof ContaminationSock) socks.add(c);
-		}
-		
-		int beltIdx = 0, sockIdx = 0, monsterIdx = 0;
-		
-		for (int index = 0; index < 100; index++) {
-			
-			if (contains(Constants.MONSTER_CELL_INDICES, index)) {
-				if (monsterIdx < monstercell.size()) setCell(index, monstercell.get(monsterIdx++));
-				else setCell(index, new Cell("Cell:" + index));
-			} 
-			else if (contains(Constants.CARD_CELL_INDICES, index)) {
-				setCell(index, new CardCell("Card-Cell:" + index));
-			} 
-			else if (contains(Constants.CONVEYOR_CELL_INDICES, index)) {
-				if (beltIdx < conveyors.size()) setCell(index, conveyors.get(beltIdx++));
-				else setCell(index, new Cell("Cell:" + index));
-			} 
-			else if (contains(Constants.SOCK_CELL_INDICES, index)) {
-				if (sockIdx < socks.size()) setCell(index, socks.get(sockIdx++));
-				else setCell(index, new Cell("Cell:" + index));
-			} 
-			else if (index % 2 == 1) {
-                // THE FIX: Exactly matches the strict test requirement!
-				int expectedDoorIndex = index / 2;
-				if (expectedDoorIndex < doors.size()) {
-					setCell(index, doors.get(expectedDoorIndex));
-				} else {
-					setCell(index, new Cell("Cell:" + index));
-				}
-			} 
-			else {
-				setCell(index, new Cell("Cell:" + index));
-			}
-		}
-	}
+		  ArrayList<Monster> sMonsters = getStationedMonsters();
+		  int[] monsterI = Constants.MONSTER_CELL_INDICES;
+		  ArrayList<Cell> monstercell = new ArrayList<Cell>();
+		  for (int i = 0; i < sMonsters.size(); i++) {
+		   sMonsters.get(i).setPosition(monsterI[i]);
+		   monstercell.add(new MonsterCell(sMonsters.get(i).getName(), sMonsters.get(i)));
+		  }
+		  
+		  ArrayList<Cell> d = new ArrayList<>();
+		  ArrayList<Cell> cs = new ArrayList<>();
+		  ArrayList<Cell> cb = new ArrayList<>();
+		  
+		  for (Cell c : specialCells) {
+		   if(c instanceof DoorCell)
+		   {
+		    d.add(c);
+		   }
+		   else if(c instanceof ContaminationSock)
+		   {
+		    cs.add(c);
+		   }
+		   else if(c instanceof ConveyorBelt)
+		   {
+		    cb.add(c);
+		   }
+		  }
+		  
+		  //get the constant indices arrays
+		  int[] cardI = Constants.CARD_CELL_INDICES;
+		  int[] convI = Constants.CONVEYOR_CELL_INDICES;
+		  int[] contI = Constants.SOCK_CELL_INDICES;
+		  
+		  for (int index = 0; index < 100; index++) {
+		   if(index%2 == 1)
+		   {
+		    if(d.size()>0)
+		    setCell(index, d.remove(0));
+		    else setCell(index, new Cell("Cell:" + index));
+		   }
+		   else{
+		    if(contains(monsterI, index))
+		    {
+		     if(monstercell.size()>0)
+		     setCell(index, monstercell.remove(0));
+		     else setCell(index, new Cell("Cell:" + index));
+		    }
+		    else if(contains(cardI, index))
+		    {
+		     setCell(index, new CardCell("Card Cell: "+index));
+		    }
+		    else if(contains(convI, index))
+		    {
+		     if(cb.size()>0)
+		     setCell(index, cb.remove(0));
+		     else setCell(index, new Cell("Cell:" + index));
+		    }
+		    else if(contains(contI, index))
+		    {
+		     if(cs.size()>0)
+		     setCell(index, cs.remove(0));
+		     else setCell(index, new Cell("Cell:" + index));
+		    }
+		    else{
+		     setCell(index, new Cell("Normal Cell"));
+		    }
+		   }
+		  }
+		  
+		 }
+
 
 	private boolean contains(int[] array, int value) {
 		for (int i : array) {
