@@ -160,7 +160,7 @@ public class Board {
 		// 6. THE FIX: Decrement confusion ONLY for the current monster that just moved!
 		// The opponent's confusion will be decremented on their own turn.
 		if (playerConf > 0) {
-			currentMonster.setConfusionTurns(currentMonster.getConfusionTurns() - 1);
+			currentMonster.decrementConfusion();
 		}
 		
 		// 7. Synchronize the board
