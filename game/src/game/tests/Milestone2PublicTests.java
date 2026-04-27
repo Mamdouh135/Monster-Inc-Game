@@ -2612,7 +2612,121 @@ public class Milestone2PublicTests {
 		
 	}
 	
-	
+	@Test(timeout = 1000)
+	public void testDoorCellOnLandMethodWhenDoorIsNotActivatedLandingMonsterOfDifferentRoleWithShield() {
+		//create a game
+		Object game = null;
+		try {
+			game = createGameForTesting();
+			
+			//get board
+			Method getBoard = game.getClass().getDeclaredMethod("getBoard");
+			Object board = getBoard.invoke(game);
+			
+			//get board cells
+			Method getBoardCells = board.getClass().getDeclaredMethod("getBoardCells");
+			Object[][] boardCells = (Object[][]) getBoardCells.invoke(board);
+			
+			//get a random door cell from the board cells list
+			int rowNumber = (new Random().nextInt(6)*2)%10;
+			int columnNumber = (new Random().nextInt(6)*2+1)%10;
+			Object doorCell = boardCells[rowNumber][columnNumber];
+			
+			//get current player
+			Method getCurrent = game.getClass().getDeclaredMethod("getCurrent");
+			Object currentPlayer = getCurrent.invoke(game);
+			
+			//get opponent player
+			Method getCurrentOpponent = game.getClass().getDeclaredMethod("getCurrentOpponent");
+			getCurrentOpponent.setAccessible(true);
+			Object opponentPlayer = getCurrentOpponent.invoke(game);
+			
+			//get stationed monsters list
+			Method getStationedMonsters = board.getClass().getDeclaredMethod("getStationedMonsters");
+			ArrayList<Object> stationedMonsters = (ArrayList<Object>) getStationedMonsters.invoke(board);	
+			
+			//get the role of the door cell
+			Method getRoleCell = Class.forName(doorCellPath).getDeclaredMethod("getRole");
+			Object doorCellRole = getRoleCell.invoke(doorCell);
+			
+			//set current player role to the door cell role
+			Method setRole= Class.forName(monsterPath).getDeclaredMethod("setRole", Class.forName(rolePath));
+			if(doorCellRole.equals(Enum.valueOf((Class<Enum>) Class.forName(rolePath), "SCARER"))){
+				setRole.invoke(currentPlayer, (Enum.valueOf((Class<Enum>) Class.forName(rolePath), "LAUGHER")));
+			}
+			else
+				setRole.invoke(currentPlayer, (Enum.valueOf((Class<Enum>) Class.forName(rolePath), "SCARER")));
+			
+			
+			//the monster's getEnergy method
+			Method getEnergy = currentPlayer.getClass().getSuperclass().getDeclaredMethod("getEnergy");
+			
+			//get role of the current player
+			Method getRole = Class.forName(monsterPath).getDeclaredMethod("getRole");
+			
+			//a hash map contains the monster in the same team as the current player with its energy
+			Object landingMonsterRole = getRole.invoke(currentPlayer);
+			LinkedHashMap<Object, Integer> monsterEnergyMap = new LinkedHashMap<>();
+
+			for(int i = stationedMonsters.size()-1; i >= 0; i--) {
+			    Object stationedMonsterRole = getRole.invoke(stationedMonsters.get(i));
+			    if(stationedMonsterRole.equals(landingMonsterRole)) {
+			        monsterEnergyMap.put(
+			            stationedMonsters.get(i),                           
+			            (Integer) getEnergy.invoke(stationedMonsters.get(i)) 
+			        );
+			    }
+			}
+			
+			//activate the current player's shield
+			Method setShield = Class.forName(monsterPath).getDeclaredMethod("setShielded", boolean.class);
+			setShield.invoke(currentPlayer, true);
+			
+			//deactivate the door cell
+			Method setActivated = Class.forName(doorCellPath).getDeclaredMethod("setActivated", boolean.class);
+			setActivated.invoke(doorCell, false);
+			
+			//get the energy of the landing monster
+			Object landingMonsterEnergyOld = getEnergy.invoke(currentPlayer);
+			
+			//the expected energy after the invoke
+			Method getEnergyDoor = Class.forName(doorCellPath).getDeclaredMethod("getEnergy");
+			Object doorCellEnergy = getEnergyDoor.invoke(doorCell);
+			
+			//invoke the onLand method
+			Method onLand = Class.forName(doorCellPath).getDeclaredMethod("onLand",Class.forName(monsterPath),Class.forName(monsterPath));
+			onLand.invoke(doorCell, currentPlayer,opponentPlayer);
+			
+			//get the value of the door cell's monster
+			Field cellMonster = Class.forName(cellPath).getDeclaredField("monster");
+			cellMonster.setAccessible(true);
+			Object cellMonsterValue = cellMonster.get(doorCell);
+			
+			assertEquals("The monster of the doorCell should be the current landing monster",currentPlayer,cellMonsterValue);
+			
+			//check landing monster's shield and energy
+			Field shielded = Class.forName(monsterPath).getDeclaredField("shielded");
+			shielded.setAccessible(true);
+			assertFalse("If a shielded monster lands on a door that does not match its role, the shield should be consumed",shielded.getBoolean(currentPlayer));
+			assertEquals("If a shielded monster lands on a door that does not match its role, its energy should remain unchanged",landingMonsterEnergyOld,getEnergy.invoke(currentPlayer));
+			
+			for(Map.Entry<Object, Integer> entry : monsterEnergyMap.entrySet()) {
+			    Object monster = entry.getKey();
+			    Integer expectedEnergyTeam = entry.getValue();
+			    Integer actualEnergy = (Integer) getEnergy.invoke(monster);
+			    assertEquals("If a shielded monster lands on a door that does not match its role, its energy should remain unchanged as well as its team",expectedEnergyTeam,actualEnergy);
+			}
+			
+			Field activated = Class.forName(doorCellPath).getDeclaredField("activated");
+			activated.setAccessible(true);
+			assertFalse("The door cell should not be activated if the landing monster is shielded",activated.getBoolean(doorCell));
+			
+		} catch (Exception e) {
+			fail(e.getClass()+ " " + e.getMessage());
+		}
+		
+		
+	}
 	
 	@Test(timeout = 1000)
 	public void testDoorCellOnLandMethodWhenDoorIsNotActivatedLandingMonsterOfDifferentRoleWithoutShield() {
