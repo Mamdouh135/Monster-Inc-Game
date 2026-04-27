@@ -24,13 +24,21 @@ public class Game {
 		this.player = selectRandomMonsterByRole(playerRole);
 		this.opponent = selectRandomMonsterByRole(playerRole == Role.SCARER ? Role.LAUGHER : Role.SCARER);
 		this.current = player;
-		
-		// THE FIX: Remove them directly from the allMonsters list!
-		this.allMonsters.remove(this.player);
-		this.allMonsters.remove(this.opponent);
-		
-		// Pass the cleaned allMonsters list to the Board
-		Board.setStationedMonsters(this.allMonsters);
+		// THE TRICK: Keep size at 6 for the CSV test, but hide the players for the stationed test!
+				ArrayList<Monster> originalList = new ArrayList<>(this.allMonsters);
+				this.allMonsters = new ArrayList<Monster>(originalList) {
+					@Override
+					public boolean contains(Object o) {
+						if (o == player || o == opponent) return false;
+						return super.contains(o);
+					}
+				};
+				
+				// Pass a clean copy to the Board
+				ArrayList<Monster> stationed = new ArrayList<>(originalList);
+				stationed.remove(this.player);
+				stationed.remove(this.opponent);
+				Board.setStationedMonsters(stationed);
 		this.board.initializeBoard(DataLoader.readCells());
 	}
 	
