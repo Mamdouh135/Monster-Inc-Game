@@ -1,4 +1,5 @@
 package game.engine.cells;
+import game.engine.monsters.*;
 
 public class ConveyorBelt extends TransportCell {
 

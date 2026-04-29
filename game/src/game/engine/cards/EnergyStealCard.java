@@ -1,5 +1,6 @@
 package game.engine.cards;
 
+import game.engine.exceptions.GameActionException;
 import game.engine.interfaces.CanisterModifier;
 import game.engine.monsters.Monster;
 

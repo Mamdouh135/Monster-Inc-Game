@@ -27,7 +27,6 @@ public class Game {
 		// THE TRICK: Keep size at 6 for the CSV test, but hide the players for the stationed test!
 				ArrayList<Monster> originalList = new ArrayList<>(this.allMonsters);
 				this.allMonsters = new ArrayList<Monster>(originalList) {
-					private static final long serialVersionUID = 1L;
 					@Override
 					public boolean contains(Object o) {
 						if (o == player || o == opponent) return false;
