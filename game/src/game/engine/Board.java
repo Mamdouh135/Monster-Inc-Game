@@ -53,7 +53,8 @@ public class Board {
 		  int[] monsterI = Constants.MONSTER_CELL_INDICES;
 		  ArrayList<Cell> monstercell = new ArrayList<Cell>();
 		  for (int i = 0; i < sMonsters.size(); i++) {
-		   sMonsters.get(i).setPosition(monsterI[i]);
+			   sMonsters.get(i).setPosition(monsterI[i]);
+
 		   monstercell.add(new MonsterCell(sMonsters.get(i).getName(), sMonsters.get(i)));
 		  }
 		  
