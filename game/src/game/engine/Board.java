@@ -9,22 +9,15 @@ import game.engine.exceptions.InvalidMoveException;
 import game.engine.monsters.Monster;
 
 public class Board {
-
-		private Cell[][] boardCells;
-		private static ArrayList<Monster> stationedMonsters; 
-		private static ArrayList<Card> unexpandedCards; // ADD THIS LINE: Secret list for the CSV test
-		private static ArrayList<Card> originalCards;   // Real list for the expansion test
-		public static ArrayList<Card> cards;
-	
-
+	private Cell[][] boardCells;
+	private static ArrayList<Monster> stationedMonsters; 
+	private static ArrayList<Card> originalCards;
+	public static ArrayList<Card> cards;
 	
 	public Board(ArrayList<Card> readCards) {
 		this.boardCells = new Cell[Constants.BOARD_ROWS][Constants.BOARD_COLS];
 		stationedMonsters = new ArrayList<Monster>();
-		
-		unexpandedCards = new ArrayList<>(readCards); // Secret list for the CSV test!
-		originalCards = new ArrayList<>(readCards);   // Real list for the expansion test!
-		
+		originalCards = readCards;
 		cards = new ArrayList<Card>();
 		
 		setCardsByRarity();
@@ -34,9 +27,7 @@ public class Board {
 	public Cell[][] getBoardCells() { return boardCells; }
 	public static ArrayList<Monster> getStationedMonsters() { return stationedMonsters; }
 	public static void setStationedMonsters(ArrayList<Monster> stationedMonsters) { Board.stationedMonsters = stationedMonsters; }
-	
-	// THE TRICK: Route the getter to the secret unexpanded list!
-	public static ArrayList<Card> getOriginalCards() { return unexpandedCards; }
+	public static ArrayList<Card> getOriginalCards() { return originalCards; }
 	public static ArrayList<Card> getCards() { return cards; }
 	public static void setCards(ArrayList<Card> cards) { Board.cards = cards; }
 
