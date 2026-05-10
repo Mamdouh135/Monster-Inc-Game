@@ -179,6 +179,7 @@ public class Board {
 		// The opponent's confusion will be decremented on their own turn.
 		if (playerConf > 0) {
 			currentMonster.decrementConfusion();
+			opponentMonster.decrementConfusion();
 		}
 		
 		// 7. Synchronize the board
