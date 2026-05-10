@@ -59,13 +59,14 @@ public class DoorCell extends Cell implements CanisterModifier {
        
         if(!(this.isActivated())){
         	boolean energyActuallyChanged=false;
-        	int beforeEnergy=this.getMonster().getEnergy();
+        	int beforeEnergy=0;
         	boolean samerole=(this.getMonster().getRole().equals(this.getRole()));
+        	if((!(this.getMonster().isShielded())&& !samerole)|| samerole){
 
         	for (Monster stationedMonster : Board.getStationedMonsters()){
         		
         		if(stationedMonster.getRole().equals(this.getMonster().getRole())){
-        			if((!(this.getMonster().isShielded())&& !samerole)|| samerole){
+        			
         		
         			beforeEnergy=stationedMonster.getEnergy();
         	this.modifyCanisterEnergy(stationedMonster, this.getEnergy());
@@ -73,6 +74,7 @@ public class DoorCell extends Cell implements CanisterModifier {
         		}    
         		}
         	}
+        	beforeEnergy=this.getMonster().getEnergy();
         	this.modifyCanisterEnergy(this.getMonster(), this.getEnergy());
         	energyActuallyChanged=this.energyChanged(this.getMonster(),beforeEnergy,energyActuallyChanged);
         	if(energyActuallyChanged)
