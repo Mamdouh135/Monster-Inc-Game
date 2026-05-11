@@ -16,6 +16,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+// Import for sound effects!
+import javafx.scene.media.AudioClip;
+import java.io.File;
+
 public class Main extends Application {
 
     @Override
@@ -23,7 +27,6 @@ public class Main extends Application {
         primaryStage.setTitle("DoorDasH: Scare vs Laugh Touchdown");
 
         BorderPane root = new BorderPane();
-        // Deep blue gradient matching the game board background
         root.setStyle("-fx-background-color: linear-gradient(to bottom, #1a2a42, #0d1522);");
 
         // --- 1. TITLE SECTION ---
@@ -35,7 +38,6 @@ public class Main extends Application {
         title.setFont(Font.font("Impact", FontWeight.BOLD, 72));
         title.setTextFill(Color.web("#f1c40f"));
         
-        // Add a nice dark drop shadow to make the title pop
         DropShadow dropShadow = new DropShadow(10, Color.BLACK);
         title.setEffect(dropShadow);
 
@@ -58,7 +60,10 @@ public class Main extends Application {
             "#8e44ad", "#9b59b6", "scarer"
         );
         Button btnScarer = createPlayButton("#8e44ad");
-        btnScarer.setOnAction(e -> launchGame(primaryStage, "SCARER"));
+        btnScarer.setOnAction(e -> {
+            playSound("start.mp3"); // Play sound on selection
+            launchGame(primaryStage, "SCARER");
+        });
         scarerCard.getChildren().add(btnScarer);
 
         // Create the Green Laugher Card
@@ -68,7 +73,10 @@ public class Main extends Application {
             "#2ecc71", "#27ae60", "laugher"
         );
         Button btnLaugher = createPlayButton("#27ae60");
-        btnLaugher.setOnAction(e -> launchGame(primaryStage, "LAUGHER"));
+        btnLaugher.setOnAction(e -> {
+            playSound("start.mp3"); // Play sound on selection
+            launchGame(primaryStage, "LAUGHER");
+        });
         laugherCard.getChildren().add(btnLaugher);
 
         selectionBox.getChildren().addAll(scarerCard, laugherCard);
@@ -82,8 +90,20 @@ public class Main extends Application {
     }
 
     private void launchGame(Stage stage, String role) {
-        // Launches your highly styled GameWindow
         new GameWindow(stage, role);
+    }
+
+    // --- AUDIO HELPER ---
+    private void playSound(String filename) {
+        try {
+            File file = new File("assets/" + filename);
+            if (file.exists()) {
+                AudioClip clip = new AudioClip(file.toURI().toString());
+                clip.play();
+            }
+        } catch (Exception e) {
+            // Fails silently if missing
+        }
     }
 
     // --- UI FACTORY METHODS ---
@@ -95,7 +115,6 @@ public class Main extends Application {
         card.setPrefWidth(350);
         card.setMaxWidth(350);
         
-        // Base Styling
         String defaultStyle = "-fx-background-color: #24344d; " +
                               "-fx-border-color: " + primaryColor + "; " +
                               "-fx-border-width: 4; " +
@@ -103,7 +122,6 @@ public class Main extends Application {
                               "-fx-background-radius: 15; " +
                               "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 15, 0, 0, 10);";
                               
-        // Glowing Hover Styling
         String hoverStyle = "-fx-background-color: #2c3e50; " +
                             "-fx-border-color: " + secondaryColor + "; " +
                             "-fx-border-width: 4; " +
@@ -113,11 +131,12 @@ public class Main extends Application {
 
         card.setStyle(defaultStyle);
 
-        // Add interactive hover glow animations
-        card.setOnMouseEntered(e -> card.setStyle(hoverStyle));
+        card.setOnMouseEntered(e -> {
+            card.setStyle(hoverStyle);
+            playSound("hover.mp3"); // Play sound when mouse enters the card
+        });
         card.setOnMouseExited(e -> card.setStyle(defaultStyle));
 
-        // Use native graphics to draw giant high-res monsters
         StackPane icon = createIcon(iconType, 130);
 
         Label name = new Label(teamName);
@@ -150,7 +169,6 @@ public class Main extends Application {
         return btn;
     }
 
-    // Native Graphics Drawer to build the monsters purely out of JavaFX shapes
     private StackPane createIcon(String type, int size) {
         StackPane iconPane = new StackPane();
         iconPane.setMinSize(size, size);
@@ -158,16 +176,13 @@ public class Main extends Application {
 
         Color baseColor = type.equals("laugher") ? Color.web("#2ecc71") : Color.web("#9b59b6");
         
-        // Body
         javafx.scene.shape.Circle body = new javafx.scene.shape.Circle(size / 2.0, baseColor);
         body.setStroke(Color.WHITE); 
         body.setStrokeWidth(size * 0.04);
         
-        // Big Cyclops Eye
         javafx.scene.shape.Circle eye = new javafx.scene.shape.Circle(size / 3.5, Color.WHITE);
         javafx.scene.shape.Circle pupil = new javafx.scene.shape.Circle(size / 8.0, Color.web("#111111"));
         
-        // Adjust eye position slightly upward
         StackPane.setMargin(eye, new Insets(0, 0, size / 5.0, 0));
         StackPane.setMargin(pupil, new Insets(0, 0, size / 5.0, 0));
         

@@ -10,6 +10,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -23,6 +25,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+// Ensure this import is here for the sound effects!
+import javafx.scene.media.AudioClip; 
+
+import java.io.File;
 
 import game.engine.Game;
 import game.engine.Role;
@@ -51,7 +58,7 @@ public class GameWindow {
     private StackPane[] cellPanes = new StackPane[100];
     private VBox logBox;
     
-    private StackPane diceView; // Replaced ImageView with our native drawing pane
+    private StackPane diceView; 
 
     public GameWindow(Stage stage, String side) {
         this.stage = stage;
@@ -63,6 +70,19 @@ public class GameWindow {
             return;
         }
         setupUI();
+    }
+
+    // --- NEW: Audio Player Helper ---
+    private void playSound(String filename) {
+        try {
+            File file = new File("assets/" + filename);
+            if (file.exists()) {
+                AudioClip clip = new AudioClip(file.toURI().toString());
+                clip.play();
+            }
+        } catch (Exception e) {
+            // Fails silently if the file is missing or format is unsupported
+        }
     }
 
     private void setupUI() {
@@ -140,7 +160,6 @@ public class GameWindow {
 
         playerCardBox.getChildren().addAll(playerName, playerType, playerEnergyText, playerEnergyBar, playerRole, playerShield);
 
-        // Native Dice Drawer
         diceView = new StackPane();
         diceView.getChildren().add(createIcon("dice6.png", 80));
         
@@ -192,6 +211,7 @@ public class GameWindow {
         VBox bottomPanel = new VBox(5, logTitle, logScroll);
         bottomPanel.setPadding(new Insets(10, 0, 0, 0));
         VBox.setVgrow(bottomPanel, Priority.ALWAYS);
+
         exitButton = new Button(" EXIT GAME");
         exitButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         exitButton.setMaxWidth(Double.MAX_VALUE);
@@ -217,8 +237,6 @@ public class GameWindow {
         stage.setScene(scene);
     }
 
-    // --- THE MAGIC: Native JavaFX Shape Generator ---
-    // Zero external files required. Completely fixes file path and encoding errors.
     private javafx.scene.Node createIcon(String type, int size) {
         StackPane iconPane = new StackPane();
         iconPane.setMinSize(size, size);
@@ -240,11 +258,9 @@ public class GameWindow {
             Color c = type.equals("player.png") ? Color.web("#2ecc71") :
                       type.equals("opponent.png") ? Color.web("#9b59b6") : Color.web("#3498db");
             
-            // Little Cyclops Body
             javafx.scene.shape.Circle body = new javafx.scene.shape.Circle(size/2.0, c);
             body.setStroke(Color.WHITE); body.setStrokeWidth(2);
             
-            // Cyclops Eye
             javafx.scene.shape.Circle eye = new javafx.scene.shape.Circle(size/4.0, Color.WHITE);
             javafx.scene.shape.Circle pupil = new javafx.scene.shape.Circle(size/8.0, Color.BLACK);
             StackPane.setMargin(eye, new Insets(0, 0, size/4.0, 0));
@@ -263,7 +279,6 @@ public class GameWindow {
             iconPane.getChildren().addAll(door, knob);
         }
         else {
-            // Cards, Belts, Socks, Start, Exit Buttons
             javafx.scene.shape.Circle bg = new javafx.scene.shape.Circle(size/2.0, Color.WHITE);
             bg.setStroke(Color.web("#34495e")); bg.setStrokeWidth(2);
             String sym = type.equals("card.png") ? "?" :
@@ -307,7 +322,7 @@ public class GameWindow {
 
             String bgColor = "#ffe680"; 
             String cellText = "";
-            javafx.scene.Node cellImage = null; // Using Node instead of ImageView
+            javafx.scene.Node cellImage = null; 
 
             if (i == 0) {
                 bgColor = "#2ecc71"; 
@@ -412,6 +427,9 @@ public class GameWindow {
         rollButton.setDisable(true);
         powerupButton.setDisable(true);
         exitButton.setDisable(true);
+        
+        // Trigger dice roll sound effect
+        playSound("roll.mp3");
 
         int finalRoll = 1;
         try {
@@ -499,6 +517,7 @@ public class GameWindow {
     private void handlePowerup() {
         try {
             game.usePowerup();
+            playSound("powerup.mp3"); // Trigger powerup sound effect
             logAction("You used your powerup!");
             updateBoard();
             
@@ -518,6 +537,7 @@ public class GameWindow {
             try {
                 if (game.getOpponent().getEnergy() >= 500) {
                     game.usePowerup();
+                    playSound("powerup.mp3"); // Trigger powerup sound for AI
                     logAction("Opponent used a powerup!");
                     updateBoard();
                 }
@@ -565,12 +585,14 @@ public class GameWindow {
     private void checkWinState() {
         Monster winner = game.getWinner();
         if (winner != null) {
+            playSound("win.mp3"); // Trigger victory sound effect
             String msg = winner.getName() + " (" + winner.getRole() + ") has won the game with " + winner.getEnergy() + " energy!";
             showCustomPopup("Game Over", "WE HAVE A WINNER!", msg, true);
         }
     }
 
     private void showError(String title, String msg) {
+        playSound("error.mp3"); // Trigger error sound effect
         showCustomPopup(title, "INVALID ACTION!", msg, false);
     }
 
@@ -605,27 +627,22 @@ public class GameWindow {
     }
 
     private void logAction(String msg) {
-        // 1. Generate a timestamp (e.g., [14:05:32])
         String time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
         
-        // 2. Build the label
         Label l = new Label("[" + time + "] " + msg);
         l.setFont(Font.font("Consolas", FontWeight.BOLD, 12));
         l.setWrapText(true);
         
-        // 3. Color-code the messages for readability
         if (msg.contains("Opponent") || msg.contains("blocked") || msg.contains("Error")) {
-            l.setTextFill(Color.web("#ff7675")); // Light Red
+            l.setTextFill(Color.web("#ff7675")); 
         } else if (msg.contains("You") || msg.contains("powerup") || msg.contains("thawed")) {
-            l.setTextFill(Color.web("#55efc4")); // Mint Green
+            l.setTextFill(Color.web("#55efc4")); 
         } else {
-            l.setTextFill(Color.web("#dfe6e9")); // Off-White for neutral
+            l.setTextFill(Color.web("#dfe6e9")); 
         }
 
-        // 4. Add to the top of the log
         logBox.getChildren().add(0, l);
         
-        // 5. Keep only the last 50 messages so the game doesn't lag over time
         if (logBox.getChildren().size() > 50) {
             logBox.getChildren().remove(50);
         }
