@@ -10,8 +10,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -25,8 +23,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
-import java.io.File;
 
 import game.engine.Game;
 import game.engine.Role;
@@ -55,7 +51,7 @@ public class GameWindow {
     private StackPane[] cellPanes = new StackPane[100];
     private VBox logBox;
     
-    private ImageView diceView;
+    private StackPane diceView; // Replaced ImageView with our native drawing pane
 
     public GameWindow(Stage stage, String side) {
         this.stage = stage;
@@ -117,7 +113,6 @@ public class GameWindow {
         mainLayout.setCenter(gridWrapper);
 
         VBox rightPanel = new VBox(15);
-        // FLEXIBLE SIDEBAR: Can shrink down to 280px if needed, prefers 350px, won't grow past 400px
         rightPanel.setMinWidth(280);
         rightPanel.setPrefWidth(350);
         rightPanel.setMaxWidth(400); 
@@ -139,18 +134,15 @@ public class GameWindow {
         
         playerEnergyText = createStyledLabel("Energy: 0 / 1000", 14, "#ffffff", false);
         playerEnergyBar = new ProgressBar(0);
-        playerEnergyBar.setMaxWidth(Double.MAX_VALUE); // Let progress bar shrink
+        playerEnergyBar.setMaxWidth(Double.MAX_VALUE);
         playerEnergyBar.setPrefHeight(15);
         playerEnergyBar.setStyle("-fx-accent: #f39c12; -fx-control-inner-background: #2c3e50;");
 
         playerCardBox.getChildren().addAll(playerName, playerType, playerEnergyText, playerEnergyBar, playerRole, playerShield);
 
-        diceView = new ImageView();
-        diceView.setFitWidth(80);
-        diceView.setFitHeight(80);
-        diceView.setPreserveRatio(true);
-        Image defaultDice = loadImage("dice6.png");
-        if (defaultDice != null) diceView.setImage(defaultDice);
+        // Native Dice Drawer
+        diceView = new StackPane();
+        diceView.getChildren().add(createIcon("dice6.png", 80));
         
         HBox diceBox = new HBox(diceView);
         diceBox.setAlignment(Pos.CENTER);
@@ -178,32 +170,35 @@ public class GameWindow {
         
         oppEnergyText = createStyledLabel("Energy: 0 / 1000", 14, "#ffffff", false);
         oppEnergyBar = new ProgressBar(0);
-        oppEnergyBar.setMaxWidth(Double.MAX_VALUE); // Let progress bar shrink
+        oppEnergyBar.setMaxWidth(Double.MAX_VALUE);
         oppEnergyBar.setPrefHeight(15);
         oppEnergyBar.setStyle("-fx-accent: #9b59b6; -fx-control-inner-background: #2c3e50;");
 
         oppCardBox.getChildren().addAll(oppName, oppType, oppEnergyText, oppEnergyBar, oppRole, oppShield);
 
-        logBox = new VBox(4);
-        logBox.setStyle("-fx-background-color: #ffffff; -fx-padding: 10; -fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5;");
-        logBox.setMinHeight(100); // Ensures it doesn't vanish entirely
-        VBox.setVgrow(logBox, Priority.ALWAYS);
+        logBox = new VBox(6);
+        logBox.setStyle("-fx-background-color: #1e272e; -fx-padding: 10;"); 
+
+        ScrollPane logScroll = new ScrollPane(logBox);
+        logScroll.setFitToWidth(true);
+        logScroll.setStyle("-fx-background: #1e272e; -fx-border-color: #3a5378; -fx-border-width: 3; -fx-border-radius: 5; -fx-background-radius: 5;");
+        logScroll.setMinHeight(150);
+        VBox.setVgrow(logScroll, Priority.ALWAYS);
         
         Label logTitle = new Label("ACTION LOG");
         logTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         logTitle.setTextFill(Color.WHITE);
         
-        VBox bottomPanel = new VBox(5, logTitle, logBox);
+        VBox bottomPanel = new VBox(5, logTitle, logScroll);
         bottomPanel.setPadding(new Insets(10, 0, 0, 0));
         VBox.setVgrow(bottomPanel, Priority.ALWAYS);
-
         exitButton = new Button(" EXIT GAME");
         exitButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         exitButton.setMaxWidth(Double.MAX_VALUE);
         exitButton.setStyle("-fx-background-color: linear-gradient(#e74c3c, #c0392b); -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 10;");
         
-        ImageView exitIcon = loadIcon("exit.png", 18);
-        if (exitIcon != null) exitButton.setGraphic(exitIcon);
+        javafx.scene.Node exitIcon = createIcon("exit.png", 18);
+        exitButton.setGraphic(exitIcon);
         exitButton.setOnAction(e -> handleExit());
 
         rightPanel.getChildren().addAll(turnInfo, playerCardBox, diceBox, rollButton, powerupButton, oppCardBox, bottomPanel, exitButton);
@@ -211,47 +206,84 @@ public class GameWindow {
 
         updateBoard();
 
-        // THE SAFETY NET: Wrap everything in a ScrollPane
         ScrollPane scrollRoot = new ScrollPane(mainLayout);
         scrollRoot.setFitToWidth(true);
         scrollRoot.setFitToHeight(true);
-        // Matches the background so the scrolling looks seamless
         scrollRoot.setStyle("-fx-background: #1a2a42; -fx-border-color: #1a2a42;");
 
         Scene scene = new Scene(scrollRoot, 1280, 850);
-        // Allow the user to shrink the window as much as they want safely
         stage.setMinWidth(600); 
         stage.setMinHeight(500);
         stage.setScene(scene);
     }
 
-    private Image loadImage(String filename) {
-        try {
-            File file = new File("assets/" + filename);
-            if (file.exists()) {
-                return new Image(file.toURI().toString());
-            }
-        } catch (Exception e) {}
-        return null;
-    }
+    // --- THE MAGIC: Native JavaFX Shape Generator ---
+    // Zero external files required. Completely fixes file path and encoding errors.
+    private javafx.scene.Node createIcon(String type, int size) {
+        StackPane iconPane = new StackPane();
+        iconPane.setMinSize(size, size);
+        iconPane.setMaxSize(size, size);
 
-    private ImageView loadIcon(String filename, int size) {
-        Image img = loadImage(filename);
-        if (img != null) {
-            ImageView view = new ImageView(img);
-            view.setFitWidth(size);
-            view.setFitHeight(size);
-            view.setPreserveRatio(true);
-            return view;
+        if (type.startsWith("dice")) {
+            int val = 6;
+            try { val = Integer.parseInt(type.replace("dice", "").replace(".png", "")); } catch(Exception e){}
+            javafx.scene.shape.Rectangle bg = new javafx.scene.shape.Rectangle(size, size, Color.WHITE);
+            bg.setArcWidth(size * 0.3); bg.setArcHeight(size * 0.3);
+            bg.setStroke(Color.web("#2c3e50")); bg.setStrokeWidth(2);
+
+            Label diceLabel = new Label(String.valueOf(val));
+            diceLabel.setFont(Font.font("Arial", FontWeight.BOLD, size * 0.6));
+            diceLabel.setTextFill(Color.web("#2c3e50"));
+            iconPane.getChildren().addAll(bg, diceLabel);
         }
-        return null;
+        else if (type.equals("player.png") || type.equals("opponent.png") || type.equals("monster.png")) {
+            Color c = type.equals("player.png") ? Color.web("#2ecc71") :
+                      type.equals("opponent.png") ? Color.web("#9b59b6") : Color.web("#3498db");
+            
+            // Little Cyclops Body
+            javafx.scene.shape.Circle body = new javafx.scene.shape.Circle(size/2.0, c);
+            body.setStroke(Color.WHITE); body.setStrokeWidth(2);
+            
+            // Cyclops Eye
+            javafx.scene.shape.Circle eye = new javafx.scene.shape.Circle(size/4.0, Color.WHITE);
+            javafx.scene.shape.Circle pupil = new javafx.scene.shape.Circle(size/8.0, Color.BLACK);
+            StackPane.setMargin(eye, new Insets(0, 0, size/4.0, 0));
+            StackPane.setMargin(pupil, new Insets(0, 0, size/4.0, 0));
+            iconPane.getChildren().addAll(body, eye, pupil);
+        }
+        else if (type.contains("door") || type.equals("boo.png")) {
+            Color c = type.equals("door_scarer.png") ? Color.web("#8e44ad") :
+                      type.equals("door_laugher.png") ? Color.web("#f39c12") : Color.web("#e84393");
+            javafx.scene.shape.Rectangle door = new javafx.scene.shape.Rectangle(size*0.7, size*0.9, c);
+            door.setStroke(Color.WHITE); door.setStrokeWidth(2);
+            
+            javafx.scene.shape.Circle knob = new javafx.scene.shape.Circle(size*0.08, Color.GOLD);
+            StackPane.setAlignment(door, Pos.BOTTOM_CENTER);
+            StackPane.setMargin(knob, new Insets(0, 0, size*0.4, size*0.3));
+            iconPane.getChildren().addAll(door, knob);
+        }
+        else {
+            // Cards, Belts, Socks, Start, Exit Buttons
+            javafx.scene.shape.Circle bg = new javafx.scene.shape.Circle(size/2.0, Color.WHITE);
+            bg.setStroke(Color.web("#34495e")); bg.setStrokeWidth(2);
+            String sym = type.equals("card.png") ? "?" :
+                         type.equals("start.png") ? "GO" :
+                         type.equals("belt.png") ? ">>" : 
+                         type.equals("sock.png") ? "S" : "X"; 
+            
+            Label l = new Label(sym);
+            l.setFont(Font.font("Consolas", FontWeight.BOLD, size*0.4));
+            l.setTextFill(Color.web("#2c3e50"));
+            iconPane.getChildren().addAll(bg, l);
+        }
+        return iconPane;
     }
 
     private Label createStyledLabel(String text, int size, String hexColor, boolean bold) {
         Label l = new Label(text);
         l.setFont(Font.font("Arial", bold ? FontWeight.BOLD : FontWeight.NORMAL, size));
         l.setTextFill(Color.web(hexColor));
-        l.setWrapText(true); // Let labels wrap if they get too tight
+        l.setWrapText(true); 
         return l;
     }
 
@@ -275,37 +307,37 @@ public class GameWindow {
 
             String bgColor = "#ffe680"; 
             String cellText = "";
-            ImageView cellImage = null;
+            javafx.scene.Node cellImage = null; // Using Node instead of ImageView
 
             if (i == 0) {
                 bgColor = "#2ecc71"; 
                 cellText = "START";
-                cellImage = loadIcon("start.png", 30);
+                cellImage = createIcon("start.png", 30);
             } else if (i == 99) {
                 bgColor = "#f1c40f"; 
                 cellText = "BOO'S\nDOOR";
-                cellImage = loadIcon("boo.png", 30);
+                cellImage = createIcon("boo.png", 30);
             } else if (engineCell instanceof DoorCell) {
                 DoorCell dc = (DoorCell) engineCell;
                 bgColor = dc.getRole() == Role.SCARER ? "#c39bd3" : "#f5b041"; 
                 cellText = "Val: " + dc.getEnergy();
-                cellImage = dc.getRole() == Role.SCARER ? loadIcon("door_scarer.png", 25) : loadIcon("door_laugher.png", 25);
+                cellImage = dc.getRole() == Role.SCARER ? createIcon("door_scarer.png", 25) : createIcon("door_laugher.png", 25);
             } else if (engineCell instanceof MonsterCell) {
                 bgColor = "#85c1e9"; 
                 Monster stationed = ((MonsterCell) engineCell).getCellMonster();
                 cellText = stationed != null ? stationed.getName().split(" ")[0] : "Monster";
-                cellImage = loadIcon("monster.png", 25);
+                cellImage = createIcon("monster.png", 25);
             } else if (engineCell instanceof CardCell) {
                 bgColor = "#ec7063"; 
-                cellImage = loadIcon("card.png", 30);
+                cellImage = createIcon("card.png", 30);
             } else if (engineCell instanceof ConveyorBelt) {
                 bgColor = "#82e0aa"; 
                 cellText = "+" + ((ConveyorBelt)engineCell).getEffect();
-                cellImage = loadIcon("belt.png", 25);
+                cellImage = createIcon("belt.png", 25);
             } else if (engineCell instanceof ContaminationSock) {
                 bgColor = "#eb984e"; 
                 cellText = "-" + Math.abs(((ContaminationSock)engineCell).getEffect());
-                cellImage = loadIcon("sock.png", 25);
+                cellImage = createIcon("sock.png", 25);
             }
 
             pane.setStyle("-fx-background-color: " + bgColor + "; -fx-border-color: #333; -fx-border-width: 1;");
@@ -323,7 +355,6 @@ public class GameWindow {
                 textLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 textLabel.setAlignment(Pos.CENTER);
                 textLabel.setMaxWidth(Double.MAX_VALUE);
-                // Allow label to shrink if cell gets tiny
                 textLabel.setMinSize(0, 0); 
                 contentBox.getChildren().add(textLabel);
             }
@@ -337,22 +368,12 @@ public class GameWindow {
                 monsterBox.setPadding(new Insets(0, 0, 6, 0)); 
                 
                 if (i == player.getPosition()) {
-                    ImageView pImg = loadIcon("player.png", 20);
-                    if (pImg != null) monsterBox.getChildren().add(pImg);
-                    else {
-                        javafx.scene.shape.Circle pToken = new javafx.scene.shape.Circle(8, Color.web("#2ecc71"));
-                        pToken.setStroke(Color.WHITE); pToken.setStrokeWidth(2);
-                        monsterBox.getChildren().add(pToken);
-                    }
+                    javafx.scene.Node pImg = createIcon("player.png", 20);
+                    monsterBox.getChildren().add(pImg);
                 }
                 if (i == opponent.getPosition()) {
-                    ImageView oImg = loadIcon("opponent.png", 20);
-                    if (oImg != null) monsterBox.getChildren().add(oImg);
-                    else {
-                        javafx.scene.shape.Circle oToken = new javafx.scene.shape.Circle(8, Color.web("#9b59b6"));
-                        oToken.setStroke(Color.WHITE); oToken.setStrokeWidth(2);
-                        monsterBox.getChildren().add(oToken);
-                    }
+                    javafx.scene.Node oImg = createIcon("opponent.png", 20);
+                    monsterBox.getChildren().add(oImg);
                 }
                 pane.getChildren().add(monsterBox);
                 StackPane.setAlignment(monsterBox, Pos.BOTTOM_CENTER);
@@ -408,15 +429,15 @@ public class GameWindow {
             Duration duration = Duration.millis(i * 60); 
             KeyFrame frame = new KeyFrame(duration, e -> {
                 int randomFace = (int) (Math.random() * 6) + 1;
-                Image diceImg = loadImage("dice" + randomFace + ".png");
-                if (diceImg != null) diceView.setImage(diceImg);
+                diceView.getChildren().clear();
+                diceView.getChildren().add(createIcon("dice" + randomFace + ".png", 80));
             });
             timeline.getKeyFrames().add(frame);
         }
 
         KeyFrame finalFrame = new KeyFrame(Duration.millis(650), e -> {
-            Image actualImg = loadImage("dice" + actualRoll + ".png");
-            if (actualImg != null) diceView.setImage(actualImg);
+            diceView.getChildren().clear();
+            diceView.getChildren().add(createIcon("dice" + actualRoll + ".png", 80));
             
             exitButton.setDisable(false); 
             executeMove(isPlayer, actualRoll);
@@ -584,8 +605,29 @@ public class GameWindow {
     }
 
     private void logAction(String msg) {
-        Label l = new Label(msg);
-        l.setFont(Font.font("Consolas", 12));
+        // 1. Generate a timestamp (e.g., [14:05:32])
+        String time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+        
+        // 2. Build the label
+        Label l = new Label("[" + time + "] " + msg);
+        l.setFont(Font.font("Consolas", FontWeight.BOLD, 12));
+        l.setWrapText(true);
+        
+        // 3. Color-code the messages for readability
+        if (msg.contains("Opponent") || msg.contains("blocked") || msg.contains("Error")) {
+            l.setTextFill(Color.web("#ff7675")); // Light Red
+        } else if (msg.contains("You") || msg.contains("powerup") || msg.contains("thawed")) {
+            l.setTextFill(Color.web("#55efc4")); // Mint Green
+        } else {
+            l.setTextFill(Color.web("#dfe6e9")); // Off-White for neutral
+        }
+
+        // 4. Add to the top of the log
         logBox.getChildren().add(0, l);
+        
+        // 5. Keep only the last 50 messages so the game doesn't lag over time
+        if (logBox.getChildren().size() > 50) {
+            logBox.getChildren().remove(50);
+        }
     }
 }
