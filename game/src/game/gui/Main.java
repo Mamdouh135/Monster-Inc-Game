@@ -1,74 +1,178 @@
 package game.gui;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.stage.Stage;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
 public class Main extends Application {
+
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("DoorDasH: Scare vs Laugh Touchdown");
 
-        Label titleLabel = new Label("DOOR DASH");
-        titleLabel.setFont(Font.font("Impact", FontWeight.BOLD, 48));
+        BorderPane root = new BorderPane();
+        // Deep blue gradient matching the game board background
+        root.setStyle("-fx-background-color: linear-gradient(to bottom, #1a2a42, #0d1522);");
+
+        // --- 1. TITLE SECTION ---
+        VBox titleBox = new VBox(5);
+        titleBox.setAlignment(Pos.CENTER);
+        titleBox.setPadding(new Insets(50, 0, 40, 0));
+
+        Label title = new Label("DOORDASH");
+        title.setFont(Font.font("Impact", FontWeight.BOLD, 72));
+        title.setTextFill(Color.web("#f1c40f"));
         
-        Label subTitle = new Label("Select Your Side");
-        subTitle.setFont(Font.font("Arial", FontWeight.NORMAL, 20));
+        // Add a nice dark drop shadow to make the title pop
+        DropShadow dropShadow = new DropShadow(10, Color.BLACK);
+        title.setEffect(dropShadow);
 
-        // Team Scarer Panel
-        VBox scarerBox = createTeamBox("TEAM SCARER", "Power of Screams", "#2c3e50", "#e74c3c");
-        Button btnScarer = new Button("PLAY AS SCARER");
-        btnScarer.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20;");
-        scarerBox.getChildren().add(btnScarer);
+        Label subtitle = new Label("SCARE VS LAUGH TOUCHDOWN");
+        subtitle.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        subtitle.setTextFill(Color.WHITE);
 
-        // Team Laugher Panel
-        VBox laugherBox = createTeamBox("TEAM LAUGHER", "Power of Laughter", "#f39c12", "#27ae60");
-        Button btnLaugher = new Button("PLAY AS LAUGHER");
-        btnLaugher.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20;");
-        laugherBox.getChildren().add(btnLaugher);
+        titleBox.getChildren().addAll(title, subtitle);
+        root.setTop(titleBox);
 
-        HBox selectionLayout = new HBox(40, scarerBox, laugherBox);
-        selectionLayout.setAlignment(Pos.CENTER);
+        // --- 2. TEAM SELECTION CARDS ---
+        HBox selectionBox = new HBox(60);
+        selectionBox.setAlignment(Pos.CENTER);
+        selectionBox.setPadding(new Insets(0, 50, 80, 50));
 
-        VBox rootBox = new VBox(30, titleLabel, subTitle, selectionLayout);
-        rootBox.setAlignment(Pos.CENTER);
-        rootBox.setStyle("-fx-background-color: #ecf0f1; -fx-padding: 40;");
+        // Create the Purple Scarer Card
+        VBox scarerCard = createTeamCard(
+            "TEAM SCARER", 
+            "Harness the dark energy of screams. Intimidate your opponents and race to Boo's door.", 
+            "#8e44ad", "#9b59b6", "scarer"
+        );
+        Button btnScarer = createPlayButton("#8e44ad");
+        btnScarer.setOnAction(e -> launchGame(primaryStage, "SCARER"));
+        scarerCard.getChildren().add(btnScarer);
 
-        BorderPane root = new BorderPane(rootBox);
+        // Create the Green Laugher Card
+        VBox laugherCard = createTeamCard(
+            "TEAM LAUGHER", 
+            "Harness the bright energy of joy. Outsmart your opponents and race to Boo's door.", 
+            "#2ecc71", "#27ae60", "laugher"
+        );
+        Button btnLaugher = createPlayButton("#27ae60");
+        btnLaugher.setOnAction(e -> launchGame(primaryStage, "LAUGHER"));
+        laugherCard.getChildren().add(btnLaugher);
 
-        Scene scene = new Scene(root, 900, 600);
+        selectionBox.getChildren().addAll(scarerCard, laugherCard);
+        root.setCenter(selectionBox);
+
+        Scene scene = new Scene(root, 1000, 700);
+        primaryStage.setMinWidth(900);
+        primaryStage.setMinHeight(650);
         primaryStage.setScene(scene);
         primaryStage.show();
-
-        // Launch Game Actions
-        btnScarer.setOnAction(e -> new GameWindow(primaryStage, "SCARER"));
-        btnLaugher.setOnAction(e -> new GameWindow(primaryStage, "LAUGHER"));
     }
 
-    private VBox createTeamBox(String teamName, String motto, String bgColor, String accentColor) {
-        VBox box = new VBox(15);
-        box.setAlignment(Pos.CENTER);
-        box.setStyle("-fx-background-color: " + bgColor + "; -fx-padding: 30; -fx-border-radius: 10; -fx-background-radius: 10; -fx-min-width: 300;");
-        
-        Label name = new Label(teamName);
-        name.setFont(Font.font("Arial", FontWeight.BOLD, 28));
-        name.setTextFill(Color.WHITE);
-        
-        Label desc = new Label(motto);
-        desc.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
-        desc.setTextFill(Color.web(accentColor));
+    private void launchGame(Stage stage, String role) {
+        // Launches your highly styled GameWindow
+        new GameWindow(stage, role);
+    }
 
-        box.getChildren().addAll(name, desc);
-        return box;
+    // --- UI FACTORY METHODS ---
+
+    private VBox createTeamCard(String teamName, String desc, String primaryColor, String secondaryColor, String iconType) {
+        VBox card = new VBox(25);
+        card.setAlignment(Pos.TOP_CENTER);
+        card.setPadding(new Insets(40, 30, 40, 30));
+        card.setPrefWidth(350);
+        card.setMaxWidth(350);
+        
+        // Base Styling
+        String defaultStyle = "-fx-background-color: #24344d; " +
+                              "-fx-border-color: " + primaryColor + "; " +
+                              "-fx-border-width: 4; " +
+                              "-fx-border-radius: 15; " +
+                              "-fx-background-radius: 15; " +
+                              "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 15, 0, 0, 10);";
+                              
+        // Glowing Hover Styling
+        String hoverStyle = "-fx-background-color: #2c3e50; " +
+                            "-fx-border-color: " + secondaryColor + "; " +
+                            "-fx-border-width: 4; " +
+                            "-fx-border-radius: 15; " +
+                            "-fx-background-radius: 15; " +
+                            "-fx-effect: dropshadow(three-pass-box, " + primaryColor + ", 25, 0.4, 0, 0);";
+
+        card.setStyle(defaultStyle);
+
+        // Add interactive hover glow animations
+        card.setOnMouseEntered(e -> card.setStyle(hoverStyle));
+        card.setOnMouseExited(e -> card.setStyle(defaultStyle));
+
+        // Use native graphics to draw giant high-res monsters
+        StackPane icon = createIcon(iconType, 130);
+
+        Label name = new Label(teamName);
+        name.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 28));
+        name.setTextFill(Color.web(primaryColor));
+
+        Label description = new Label(desc);
+        description.setFont(Font.font("Arial", 15));
+        description.setTextFill(Color.web("#bdc3c7"));
+        description.setWrapText(true);
+        description.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        description.setMinHeight(70);
+
+        card.getChildren().addAll(icon, name, description);
+        return card;
+    }
+
+    private Button createPlayButton(String color) {
+        Button btn = new Button("SELECT TEAM");
+        btn.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        btn.setMaxWidth(Double.MAX_VALUE);
+        
+        String defaultStyle = "-fx-background-color: " + color + "; -fx-text-fill: white; -fx-padding: 15; -fx-background-radius: 8;";
+        String hoverStyle = "-fx-background-color: derive(" + color + ", 20%); -fx-text-fill: white; -fx-padding: 15; -fx-background-radius: 8;";
+        
+        btn.setStyle(defaultStyle);
+        btn.setOnMouseEntered(e -> btn.setStyle(hoverStyle));
+        btn.setOnMouseExited(e -> btn.setStyle(defaultStyle));
+        
+        return btn;
+    }
+
+    // Native Graphics Drawer to build the monsters purely out of JavaFX shapes
+    private StackPane createIcon(String type, int size) {
+        StackPane iconPane = new StackPane();
+        iconPane.setMinSize(size, size);
+        iconPane.setMaxSize(size, size);
+
+        Color baseColor = type.equals("laugher") ? Color.web("#2ecc71") : Color.web("#9b59b6");
+        
+        // Body
+        javafx.scene.shape.Circle body = new javafx.scene.shape.Circle(size / 2.0, baseColor);
+        body.setStroke(Color.WHITE); 
+        body.setStrokeWidth(size * 0.04);
+        
+        // Big Cyclops Eye
+        javafx.scene.shape.Circle eye = new javafx.scene.shape.Circle(size / 3.5, Color.WHITE);
+        javafx.scene.shape.Circle pupil = new javafx.scene.shape.Circle(size / 8.0, Color.web("#111111"));
+        
+        // Adjust eye position slightly upward
+        StackPane.setMargin(eye, new Insets(0, 0, size / 5.0, 0));
+        StackPane.setMargin(pupil, new Insets(0, 0, size / 5.0, 0));
+        
+        iconPane.getChildren().addAll(body, eye, pupil);
+        return iconPane;
     }
 
     public static void main(String[] args) {
