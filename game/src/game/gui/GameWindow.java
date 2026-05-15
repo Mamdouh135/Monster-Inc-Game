@@ -724,7 +724,7 @@ public class GameWindow {
 
         log(current.getName() + " rolled " + roll, "neutral");
 
-        // --- BULLETPROOF ENGINE SYNC: Peek at Top Card ---
+        // ── 1. ENGINE SYNCHRONIZATION: Peek at the exact card on top of the pile ──
         Card expectedCard = null;
         int deckSizeBefore = 0;
         try {
@@ -738,41 +738,27 @@ public class GameWindow {
         } catch (Exception ignored) {}
 
         try {
-            if (current.isFrozen()) {
-                current.setFrozen(false);
-                log(current.getName() + " was frozen — skipping turn.", "bad");
-                game.setCurrent(other);
-            } else {
-                
-                // EXECUTE THE ACTUAL ENGINE MOVE
-                game.getBoard().moveMonster(current, roll, other);
-                
-                // --- DETECT IF THE ENGINE PROCESSED A CARD ---
-                int deckSizeAfter = Board.getCards() != null ? Board.getCards().size() : 0;
-                
-                if (deckSizeAfter < deckSizeBefore && expectedCard != null) {
-                    playSound("whoosh.wav"); 
-                    notifyCardDrawn("🃏", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
-                }
-                
-                game.setCurrent(other);
+            // ── 2. ENGINE IN TOTAL CONTROL ──
+            // We call playTurn(), which internally invokes board.moveMonster() 
+            // and strictly utilizes the engine's native move() parameters.
+            game.playTurn();
+            
+            // ── 3. POST-MOVEMENT CARD CELL DRAW CHECK ──
+            int deckSizeAfter = Board.getCards() != null ? Board.getCards().size() : 0;
+            if (deckSizeAfter < deckSizeBefore && expectedCard != null) {
+                playSound("whoosh.wav"); 
+                notifyCardDrawn("🃏", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
             }
+            
         } catch (InvalidMoveException ex) {
-            showError("Move Blocked", current.getName() + " cannot move there. The cell is occupied! Roll again.");
-            refreshAll(); 
-            return;
+            // If the engine throws an InvalidMoveException (such as landing on a blocked cell on turn 1)
+            // the catch block accurately retains the token position and allows the next move.
+            showError("Move Blocked", current.getName() + " had its move reverted or blocked by an obstacle! Roll again.");
         } catch (Exception ex) {
-            Throwable cause = ex.getCause();
-            if (cause instanceof InvalidMoveException) {
-                showError("Move Blocked", current.getName() + " cannot move there. The cell is occupied! Roll again.");
-                refreshAll(); 
-                return;
-            }
             showError("Error", ex.getMessage());
-            refreshAll();
-            return;
         }
 
+        // Synchronize and re-render the matrix layout exactly to match the engine's state variables
         refreshAll();
         checkWin();
     }
