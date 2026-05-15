@@ -29,17 +29,14 @@ import java.io.File;
 
 public class Main extends Application {
 
-    // --- SYNTHWAVE / NEON PALETTE (Matches GameWindow) ---
     private static final String BG_APP        = "#0a0a1a";
     private static final String BG_CARD       = "linear-gradient(to bottom right, #12082a, #1a1040)";
-    
     private static final String PURPLE        = "#7c3aed";
     private static final String PURPLE_BORDER = "#7c3aed44";
     private static final String GOLD          = "#fbbf24";
     private static final String ORANGE        = "#f97316";
     private static final String GREEN         = "#10b981";
     private static final String CYAN          = "#67e8f9";
-    
     private static final String TEXT_LIGHT    = "#f0ece0";
     private static final String TEXT_MUTED    = "#9ca3af";
 
@@ -77,10 +74,11 @@ public class Main extends Application {
         selectionBox.setAlignment(Pos.CENTER);
         selectionBox.setPadding(new Insets(0, 50, 40, 50));
 
+        // DYNAMIC TEAM LOGOS (Uses the exact PNG names we agreed on)
         VBox scarerCard = createTeamCard(
             "TEAM SCARER", 
             "Harness the dark energy of screams. Intimidate your foes and seize Boo's door.", 
-            PURPLE, "opponent.png"
+            PURPLE, "team_scarer.png"
         );
         Button btnScarer = createPlayButton(PURPLE, "SELECT SCARER");
         btnScarer.setOnAction(e -> launchGameWithTransition(primaryStage, "SCARER"));
@@ -89,7 +87,7 @@ public class Main extends Application {
         VBox laugherCard = createTeamCard(
             "TEAM LAUGHER", 
             "Harness the bright energy of joy. Outwit your opponents and claim Boo's door.", 
-            GREEN, "player.png"
+            GREEN, "team_laugher.png"
         );
         Button btnLaugher = createPlayButton(GREEN, "SELECT LAUGHER");
         btnLaugher.setOnAction(e -> launchGameWithTransition(primaryStage, "LAUGHER"));
@@ -132,7 +130,6 @@ public class Main extends Application {
         primaryStage.show();
     }
 
-    // --- CINEMATIC TRANSITION ---
     private void launchGameWithTransition(Stage stage, String role) {
         playSound("start.wav");
         Region fadeOverlay = new Region();
@@ -146,7 +143,6 @@ public class Main extends Application {
         ft.play();
     }
 
-    // --- POPUP INSTRUCTIONS ---
     private void showInstructions() {
         playSound("hover.wav");
         Stage pop = new Stage();
@@ -248,9 +244,6 @@ public class Main extends Application {
             }
         } catch (Exception e) {}
         
-        Label placeholder = new Label("?");
-        placeholder.setTextFill(Color.WHITE);
-        placeholder.setFont(Font.font(size));
         return null; 
     }
 
@@ -290,9 +283,9 @@ public class Main extends Application {
             st.playFromStart();
         });
 
-        ImageView icon = loadIcon(imgFile, 120);
+        ImageView icon = loadIcon(imgFile, 150); // Made menu icons larger (was 120)
         StackPane iconPane = new StackPane();
-        iconPane.setMinHeight(130);
+        iconPane.setMinHeight(160);
         if (icon != null) {
             iconPane.getChildren().add(icon);
         } else {

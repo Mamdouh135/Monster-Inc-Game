@@ -27,6 +27,7 @@ import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
@@ -47,7 +48,7 @@ import game.engine.exceptions.OutOfEnergyException;
 
 public class GameWindow {
 
-    // ── PALETTE (mirrors HTML mockup exactly) ──────────────────────────────
+    // ── PALETTE ────────────────────────────────────────────────────────────
     private static final String BG_APP        = "#0a0a1a";
     private static final String BG_CARD       = "linear-gradient(to bottom right, #12082a, #1a1040)";
     private static final String BG_BOARD      = "#0d0d22";
@@ -88,45 +89,27 @@ public class GameWindow {
     private Game game;
     private BorderPane mainLayout;
 
-    // Board
     private final StackPane[] cellPanes = new StackPane[100];
     private GridPane boardGrid;
 
-    // Top bar
     private Label lblTurnBadge;
-
-    // Player panel
-    private VBox playerCard;
+    private VBox playerCard, oppCard;
     private Label lblPlayerName, lblPlayerType, lblPlayerEnergy;
     private Label tagPlayerRole, tagPlayerShield, tagPlayerConfusion, tagPlayerFreeze;
     private ProgressBar barPlayerEnergy;
-    private Button btnPlayerPowerup;
-
-    // Opponent panel
-    private VBox oppCard;
+    private Button btnPlayerPowerup, btnRoll, btnCheatGate, btnCheatEnergy;
+    
     private Label lblOppName, lblOppType, lblOppEnergy;
     private Label tagOppRole, tagOppShield, tagOppConfusion, tagOppFreeze;
     private ProgressBar barOppEnergy;
     private Button btnOppPowerup;
 
-    // Controls
     private ImageView diceView;
-    private Button btnRoll;
-    private VBox logBox;
-
-    // Right panel info
+    private VBox logBox, cardVisualBox;
     private Label lblCardIcon, lblLastCardName, lblLastCardEffect, lblPileCount;
-    private VBox cardVisualBox;
 
-    // Cheat buttons
-    private Button btnCheatGate, btnCheatEnergy;
-
-    // Energy change tracking
     private int lastPlayerEnergy = -1, lastOppEnergy = -1;
 
-    // ══════════════════════════════════════════════════════════════════════
-    // CONSTRUCTOR
-    // ══════════════════════════════════════════════════════════════════════
     public GameWindow(Stage stage, String side) {
         this.stage = stage;
         try {
@@ -144,9 +127,6 @@ public class GameWindow {
         if (game.getOpponent() != null) lastOppEnergy    = game.getOpponent().getEnergy();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // DYNAMIC ENGINE SYNCHRONIZATION
-    // ══════════════════════════════════════════════════════════════════════
     private int getDeckSize() {
         try {
             java.lang.reflect.Method getDeck = game.getClass().getMethod("getDeck");
@@ -164,9 +144,6 @@ public class GameWindow {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // ASSET HELPERS
-    // ══════════════════════════════════════════════════════════════════════
     private void playSound(String f) {
         try {
             File file = new File("assets/" + f);
@@ -191,9 +168,34 @@ public class GameWindow {
         return iv;
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // TOP-LEVEL UI BUILDER
-    // ══════════════════════════════════════════════════════════════════════
+    // ── DYNAMIC AVATAR BUILDER ─────────────────────────────────────────────
+    private StackPane buildDynamicAvatar(Monster m, String ringColor, int size) {
+        StackPane sp = new StackPane();
+        sp.setPrefSize(size + 14, size + 14); 
+        sp.setMaxSize(size + 14, size + 14);
+        sp.setStyle("-fx-background-color: #111111; " +
+                    "-fx-border-color: " + ringColor + "; " +
+                    "-fx-border-width: 2.5; " +
+                    "-fx-border-radius: 50%; " +
+                    "-fx-background-radius: 50%; " + 
+                    "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 5, 0, 0, 3);");
+
+        String dynamicImgName = m.getClass().getSimpleName().toLowerCase() + ".png";
+        ImageView iv = loadIcon(dynamicImgName, size);
+        
+        if (iv != null) {
+            Circle clip = new Circle(size/2.0, size/2.0, size/2.0);
+            iv.setClip(clip);
+            sp.getChildren().add(iv);
+        } else {
+            Label fallback = new Label(m.getName().substring(0, 1).toUpperCase());
+            fallback.setFont(Font.font("Arial Black", FontWeight.BOLD, size/1.5));
+            fallback.setTextFill(Color.web(ringColor));
+            sp.getChildren().add(fallback);
+        }
+        return sp;
+    }
+
     private void buildUI() {
         mainLayout = new BorderPane();
         mainLayout.setStyle("-fx-background-color:" + BG_APP + ";");
@@ -214,9 +216,6 @@ public class GameWindow {
         stage.setScene(scene);
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // TOP BAR
-    // ─────────────────────────────────────────────────────────────────────
     private HBox buildTopBar() {
         HBox bar = new HBox(14);
         bar.setAlignment(Pos.CENTER_LEFT);
@@ -242,31 +241,27 @@ public class GameWindow {
         return bar;
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LEFT PANEL  (player monster card)
-    // ─────────────────────────────────────────────────────────────────────
     private VBox buildLeftPanel() {
         VBox panel = new VBox(12);
-        panel.setPrefWidth(250);
+        panel.setPrefWidth(260);
         panel.setPadding(new Insets(18));
 
         panel.getChildren().add(panelLabel("⚡ YOUR MONSTER"));
 
-        // ── monster card ──
         playerCard = monsterCard();
 
-        // avatar row
-        HBox avatarRow = new HBox(10);
+        HBox avatarRow = new HBox(12);
         avatarRow.setAlignment(Pos.CENTER_LEFT);
-        StackPane avatar = monsterAvatar("player.png", PURPLE);
+        
+        // --- INCREASED SIZE TO 48 ---
+        StackPane avatar = buildDynamicAvatar(game.getPlayer(), PURPLE, 48);
+        
         lblPlayerName = labelOf("", 17, TEXT_LIGHT, true);
         VBox nameCol = new VBox(2, lblPlayerName);
         avatarRow.getChildren().addAll(avatar, nameCol);
 
-        // type
         lblPlayerType = labelOf("", 11, MUTED, false);
 
-        // role / status tags
         tagPlayerRole      = makeTag("", BLUE_TEXT,  "#1e3a8a33", "#1e3a8a66");
         tagPlayerShield    = makeTag("🛡 Shield",  CYAN,        "#0e749022", "#0e749066");
         tagPlayerConfusion = makeTag("😵 Confused",AMBER_TEXT,  "#d9770622", "#d9770666");
@@ -274,19 +269,15 @@ public class GameWindow {
         
         FlowTags pTags = new FlowTags(tagPlayerRole, tagPlayerShield, tagPlayerConfusion, tagPlayerFreeze);
 
-        // energy
         lblPlayerEnergy = labelOf("", 12, GOLD, true);
         barPlayerEnergy = energyBar(PURPLE);
 
-        // powerup button
         btnPlayerPowerup = actionButton("⚡ USE POWERUP  (500 ⚡)", PURPLE, "#ffffff");
         btnPlayerPowerup.setOnAction(e -> handlePowerup());
 
-        // divider
         Region div = new Region(); div.setPrefHeight(1);
         div.setStyle("-fx-background-color:#7c3aed22;");
 
-        // cheat buttons
         btnCheatGate   = smallBtn("⚡ TELEPORT",   "#2d2860", "#c4b5fd");
         btnCheatEnergy = smallBtn("💠 +500 ENERGY", "#2d2860", "#c4b5fd");
         btnCheatGate.setOnAction(e -> handleCheatGate());
@@ -303,14 +294,10 @@ public class GameWindow {
         return panel;
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // CENTER PANEL  (board + controls bar)
-    // ─────────────────────────────────────────────────────────────────────
     private VBox buildCenterPanel() {
         VBox panel = new VBox(10);
         panel.setPadding(new Insets(18, 8, 18, 8));
 
-        // board
         boardGrid = new GridPane();
         boardGrid.setHgap(3); boardGrid.setVgap(3);
         boardGrid.setPadding(new Insets(10));
@@ -334,7 +321,6 @@ public class GameWindow {
             StackPane cell = new StackPane();
             cell.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-            // index label (top-left)
             Label num = new Label(String.valueOf(idx));
             num.setFont(Font.font("Arial", FontWeight.BOLD, 8));
             num.setTextFill(Color.web("#ffffff44"));
@@ -346,9 +332,7 @@ public class GameWindow {
             cellPanes[idx] = cell;
         }
 
-        // controls bar
         HBox controlsBar = buildControlsBar();
-
         panel.getChildren().addAll(boardGrid, controlsBar);
         return panel;
     }
@@ -361,7 +345,6 @@ public class GameWindow {
                    + "-fx-border-color:#7c3aed33;"
                    + "-fx-border-radius:14;-fx-background-radius:14;");
 
-        // dice image
         diceView = new ImageView();
         diceView.setFitWidth(54); diceView.setFitHeight(54);
         Image di = loadImage("dice6.png");
@@ -372,7 +355,6 @@ public class GameWindow {
         btnRoll.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 15));
         btnRoll.setOnAction(e -> handleRollDice());
 
-        // log
         logBox = new VBox(4);
         logBox.setPadding(new Insets(6, 10, 6, 10));
         ScrollPane logScroll = new ScrollPane(logBox);
@@ -388,22 +370,21 @@ public class GameWindow {
         return bar;
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // RIGHT PANEL  (opponent + legend + last card)
-    // ─────────────────────────────────────────────────────────────────────
     private VBox buildRightPanel() {
         VBox panel = new VBox(12);
-        panel.setPrefWidth(250);
+        panel.setPrefWidth(260);
         panel.setPadding(new Insets(18));
 
         panel.getChildren().add(panelLabel("🎯 OPPONENT"));
 
-        // ── opponent card ──
         oppCard = monsterCard();
 
-        HBox avatarRow = new HBox(10);
+        HBox avatarRow = new HBox(12);
         avatarRow.setAlignment(Pos.CENTER_LEFT);
-        StackPane avatar = monsterAvatar("opponent.png", GREEN_DIM);
+        
+        // --- INCREASED SIZE TO 48 ---
+        StackPane avatar = buildDynamicAvatar(game.getOpponent(), GREEN_DIM, 48);
+        
         lblOppName = labelOf("", 17, TEXT_LIGHT, true);
         VBox nameCol = new VBox(2, lblOppName);
         avatarRow.getChildren().addAll(avatar, nameCol);
@@ -430,7 +411,6 @@ public class GameWindow {
                 sep(), lblOppEnergy, barOppEnergy,
                 sep(), btnOppPowerup);
 
-        // ── legend card ──
         VBox legendCard = infoCard("BOARD LEGEND");
         legendCard.getChildren().addAll(
                 legendRow("🚪", CELL_DOOR_S[1],   "Scarer Door"),
@@ -441,7 +421,6 @@ public class GameWindow {
                 legendRow("👾", CELL_MONSTER[1],  "Monster Cell"),
                 legendRow("⬜", CELL_NORMAL[1],   "Normal Cell"));
 
-        // ── last card drawn card ──
         VBox cardInfoCard = infoCard("LAST CARD DRAWN");
         cardVisualBox = new VBox(6);
         cardVisualBox.setAlignment(Pos.CENTER);
@@ -450,7 +429,6 @@ public class GameWindow {
                 + "-fx-border-color:#7c3aed55;-fx-border-style:dashed;"
                 + "-fx-border-radius:10;-fx-background-radius:10;");
 
-        // RESET TO INITIAL EMPTY STATE
         lblLastCardName   = labelOf("Unknown", 13, VIOLET_TEXT, true);
         lblLastCardEffect = labelOf("Land on a Card Cell to reveal your fate.", 10, MUTED, false);
         lblLastCardEffect.setWrapText(true);
@@ -482,7 +460,6 @@ public class GameWindow {
 
         cardInfoCard.getChildren().addAll(cardVisualBox, pileRow);
 
-        // ── exit button ──
         Button btnExit = new Button("⚠  ABANDON GAME");
         btnExit.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 13));
         btnExit.setMaxWidth(Double.MAX_VALUE);
@@ -493,9 +470,6 @@ public class GameWindow {
         return panel;
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // BOARD RENDERING
-    // ══════════════════════════════════════════════════════════════════════
     private void refreshBoard() {
         Monster player   = game.getPlayer();
         Monster opponent = game.getOpponent();
@@ -504,17 +478,14 @@ public class GameWindow {
         for (int idx = 0; idx < 100; idx++) {
             StackPane pane = cellPanes[idx];
 
-            // Keep only the index label (first child)
             Node idxLabel = pane.getChildren().get(0);
             pane.getChildren().clear();
             pane.getChildren().add(idxLabel);
 
-            // Resolve engine cell
             int boardRow = idx / 10;
             int boardCol = (boardRow % 2 == 1) ? 9 - (idx % 10) : (idx % 10);
             Cell ec = engineCells[boardRow][boardCol];
 
-            // Determine visual properties
             String[] colors = CELL_NORMAL;
             String   icon   = "";
             String   info   = "";
@@ -532,7 +503,6 @@ public class GameWindow {
                 info    = dc.getEnergy() + " ⚡";
                 tooltip = (isScarer ? "SCARER" : "LAUGHER") + " Door  |  Energy: " + dc.getEnergy()
                         + (dc.isActivated() ? "  [Exhausted]" : "  [Fresh]");
-                // Dim exhausted doors
                 if (dc.isActivated())
                     colors = new String[]{colors[0].replace("0.25", "0.12"), colors[1]};
             } else if (ec instanceof MonsterCell) {
@@ -555,7 +525,6 @@ public class GameWindow {
                 tooltip = "Contamination Sock — " + ((ContaminationSock) ec).getEffect() + " cells, −100 ⚡";
             }
 
-            // Apply cell style
             pane.setStyle("-fx-background-color:" + colors[0] + ";"
                         + "-fx-border-color:" + colors[1] + ";"
                         + "-fx-border-width:1.5;"
@@ -563,12 +532,10 @@ public class GameWindow {
 
             Tooltip.install(pane, styledTooltip(tooltip));
 
-            // Content VBox
             VBox content = new VBox(1);
             content.setAlignment(Pos.TOP_CENTER);
             content.setPadding(new Insets(6, 0, 0, 0));
 
-            // Optional image icon
             ImageView iv = loadIcon(cellIconFile(ec, idx), 32);
             if (iv != null) content.getChildren().add(iv);
             else if (!icon.isEmpty()) {
@@ -588,7 +555,7 @@ public class GameWindow {
             pane.getChildren().add(content);
             StackPane.setAlignment(content, Pos.TOP_CENTER);
 
-            // Monster tokens (bottom of cell)
+            // --- DYNAMIC TOKENS INCREASED TO 28 ---
             boolean hasPlayer = (idx == player.getPosition());
             boolean hasOpp    = (idx == opponent.getPosition());
             if (hasPlayer || hasOpp) {
@@ -597,12 +564,10 @@ public class GameWindow {
                 tokens.setPadding(new Insets(0, 0, 4, 0));
 
                 if (hasPlayer) {
-                    ImageView pImg = loadIcon("player.png", 26);
-                    tokens.getChildren().add(pImg != null ? pImg : tokenDot(PURPLE));
+                    tokens.getChildren().add(buildDynamicAvatar(player, PURPLE, 26));
                 }
                 if (hasOpp) {
-                    ImageView oImg = loadIcon("opponent.png", 26);
-                    tokens.getChildren().add(oImg != null ? oImg : tokenDot(GREEN_DIM));
+                    tokens.getChildren().add(buildDynamicAvatar(opponent, GREEN_DIM, 26));
                 }
                 pane.getChildren().add(tokens);
                 StackPane.setAlignment(tokens, Pos.BOTTOM_CENTER);
@@ -615,22 +580,21 @@ public class GameWindow {
         if (idx == 99) return "boo.png";
         if (ec instanceof DoorCell)
             return ((DoorCell) ec).getRole() == Role.SCARER ? "door_scarer.png" : "door_laugher.png";
-        if (ec instanceof MonsterCell) return "monster.png";
+        if (ec instanceof MonsterCell) {
+            Monster m = ((MonsterCell) ec).getCellMonster();
+            return m != null ? m.getClass().getSimpleName().toLowerCase() + ".png" : "monster.png";
+        }
         if (ec instanceof CardCell)    return "card.png";
         if (ec instanceof ConveyorBelt) return "belt.png";
         if (ec instanceof ContaminationSock) return "sock.png";
         return "";
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // STAT PANEL REFRESH
-    // ══════════════════════════════════════════════════════════════════════
     private void refreshStats() {
         Monster p = game.getPlayer();
         Monster o = game.getOpponent();
         boolean myTurn = (game.getCurrent() == p);
 
-        // ── player card ──
         lblPlayerName.setText(p.getName());
         lblPlayerType.setText(p.getClass().getSimpleName());
         lblPlayerEnergy.setText("Energy:  " + p.getEnergy() + "  /  1000");
@@ -641,7 +605,6 @@ public class GameWindow {
         setTagVisible(tagPlayerConfusion, p.isConfused(), "😵 Confused");
         setTagVisible(tagPlayerFreeze, p.isFrozen());
 
-        // ── opponent card ──
         lblOppName.setText(o.getName());
         lblOppType.setText(o.getClass().getSimpleName());
         lblOppEnergy.setText("Energy:  " + o.getEnergy() + "  /  1000");
@@ -652,12 +615,10 @@ public class GameWindow {
         setTagVisible(tagOppConfusion, o.isConfused(), "😵 Confused");
         setTagVisible(tagOppFreeze, o.isFrozen());
 
-        // Update exact pile count dynamically from Engine
         int currentDeckSize = 0;
         try { currentDeckSize = getDeckSize(); } catch (Exception ignored) {}
         lblPileCount.setText("📚 Pile: " + currentDeckSize + " cards");
 
-        // ── active-turn glow ──
         if (myTurn) {
             glowCard(playerCard, true);
             glowCard(oppCard, false);
@@ -680,9 +641,6 @@ public class GameWindow {
         checkAndSpawnFloats();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // GAME-FEEL: FLOATING TEXT  +  SCREEN SHAKE
-    // ══════════════════════════════════════════════════════════════════════
     private void checkAndSpawnFloats() {
         Monster p = game.getPlayer();
         Monster o = game.getOpponent();
@@ -729,9 +687,6 @@ public class GameWindow {
         shake.play();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // ACTION HANDLERS
-    // ══════════════════════════════════════════════════════════════════════
     private void handleRollDice() {
         performAnimatedRoll(true);
     }
@@ -743,7 +698,6 @@ public class GameWindow {
         btnCheatEnergy.setDisable(true);
         playSound("roll.wav");
 
-        // Try to get actual roll value via reflection
         int[] finalRoll = {(int)(Math.random() * 6) + 1};
         try {
             java.lang.reflect.Method rm = game.getClass().getDeclaredMethod("rollDice");
@@ -775,7 +729,6 @@ public class GameWindow {
 
         log((isPlayer ? "You" : "Opponent") + " rolled " + roll, "neutral");
 
-        // --- CAPTURE TOP CARD BEFORE MOVE ---
         Object topCard = null;
         try {
             java.util.List<?> deck = Board.getCards();
@@ -791,7 +744,6 @@ public class GameWindow {
             } else {
                 game.getBoard().moveMonster(current, roll, other);
                 
-                // ── DYNAMIC CARD DETECTION LOGIC ──
                 int newPos = current.getPosition();
                 int boardRow = newPos / 10;
                 int boardCol = (boardRow % 2 == 1) ? 9 - (newPos % 10) : (newPos % 10);
@@ -800,7 +752,6 @@ public class GameWindow {
                 if (landedCell instanceof CardCell) {
                     playSound("whoosh.wav"); 
                     
-                    // Extract REAL card details using reflection
                     String cName = "Unknown Card";
                     String cDesc = "A mysterious effect occurred.";
                     if (topCard != null) {
@@ -912,9 +863,6 @@ public class GameWindow {
         showWinScreen(winner, playerWon);
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // POPUPS
-    // ══════════════════════════════════════════════════════════════════════
     private void showWinScreen(Monster winner, boolean playerWon) {
         Stage pop = new Stage();
         pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
@@ -951,7 +899,6 @@ public class GameWindow {
         Button btnBack = actionButton("↩  RETURN TO MENU", GOLD, "#1a0a00");
         btnBack.setPrefWidth(240);
         
-        // FIX: Reloads the Main menu instead of closing the app
         btnBack.setOnAction(e -> {
             pop.close();
             try {
@@ -964,6 +911,7 @@ public class GameWindow {
         layout.getChildren().addAll(trophy, header, detail, scores, btnBack);
         Scene sc = new Scene(new StackPane(layout)); sc.setFill(Color.TRANSPARENT);
         fadeInLayout(layout);
+        
         pop.setScene(sc); pop.show();
     }
 
@@ -1006,7 +954,6 @@ public class GameWindow {
         pop.setScene(sc); pop.show();
     }
 
-    // ── NEW CUSTOM EXIT PROMPT ────────────────────────────────────────────
     private void handleExitPrompt() {
         playSound("error.wav"); 
         Stage pop = new Stage();
@@ -1043,7 +990,6 @@ public class GameWindow {
         btnConfirm.setPrefWidth(130);
         btnConfirm.setStyle(btnConfirm.getStyle() + "-fx-effect:dropshadow(three-pass-box," + RED + "aa,10,0.4,0,0);");
         
-        // KEEPS THE ORIGINAL QUIT BEHAVIOR (CLOSES THE WHOLE GAME)
         btnConfirm.setOnAction(e -> {
             pop.close();
             stage.close();
@@ -1068,13 +1014,12 @@ public class GameWindow {
         pop.setScene(sc); pop.show();
     }
 
-    // ── Helper: update card drawn notification dynamically ───────────────
     public void notifyCardDrawn(String icon, String cardName, String effect, int remainingPile) {
         lblCardIcon.setText(icon);
         lblLastCardName.setText(cardName);
         lblLastCardEffect.setText(effect);
         lblPileCount.setText("📚 Pile: " + remainingPile + " cards");
-        log("Card drawn: " + cardName + " — " + effect, "neutral");
+        log("Card drawn: " + cardName, "neutral");
         
         ScaleTransition st = new ScaleTransition(Duration.millis(300), cardVisualBox);
         st.setFromX(0.85); st.setFromY(0.85);
@@ -1082,9 +1027,6 @@ public class GameWindow {
         st.play();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // WIDGET FACTORIES
-    // ══════════════════════════════════════════════════════════════════════
     private VBox monsterCard() {
         VBox box = new VBox(8);
         box.setPadding(new Insets(16));
@@ -1129,7 +1071,6 @@ public class GameWindow {
         return l;
     }
 
-    // tag visibility helpers
     private void setTagVisible(Label tag, boolean visible) {
         tag.setVisible(visible); tag.setManaged(visible);
     }
@@ -1138,7 +1079,6 @@ public class GameWindow {
         setTagVisible(tag, visible);
     }
 
-    /** FlowTags: wraps a set of tags in a wrapping HBox */
     private static class FlowTags {
         final HBox box;
         FlowTags(Label... tags) {
@@ -1227,7 +1167,6 @@ public class GameWindow {
         return t;
     }
 
-    // ── active-turn card glow ─────────────────────────────────────────────
     private void glowCard(VBox card, boolean active) {
         if (active) {
             card.setStyle("-fx-background-color:" + BG_CARD + ";"
@@ -1241,7 +1180,6 @@ public class GameWindow {
         }
     }
 
-    // ── turn badge style ─────────────────────────────────────────────────
     private void styleTurnBadge(Label lbl, boolean myTurn) {
         if (myTurn) {
             lbl.setText("▶  YOUR TURN");
@@ -1257,7 +1195,6 @@ public class GameWindow {
         }
     }
 
-    // ── exit button ───────────────────────────────────────────────────────
     private void styleExitButton(Button btn) {
         String def = "-fx-background-color:linear-gradient(to right," + RED_DIM + "," + RED + ");"
                    + "-fx-text-fill:white;-fx-padding:11;-fx-border-radius:10;-fx-background-radius:10;"
@@ -1269,11 +1206,9 @@ public class GameWindow {
         ImageView ic = loadIcon("exit.png", 16);
         if (ic != null) btn.setGraphic(ic);
         
-        // NOW HOOKED UP TO THE NEW ANIMATED CONFIRMATION MODAL!
         btn.setOnAction(e -> handleExitPrompt());
     }
 
-    // ── fade-in animation for popups ──────────────────────────────────────
     private void fadeInLayout(VBox layout) {
         layout.setOpacity(0); layout.setTranslateY(24);
         FadeTransition ft = new FadeTransition(Duration.millis(260), layout); ft.setToValue(1);
@@ -1281,7 +1216,6 @@ public class GameWindow {
         ft.play(); tt.play();
     }
 
-    // ── event log ────────────────────────────────────────────────────────
     private void log(String msg, String type) {
         String time = java.time.LocalTime.now()
                 .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
