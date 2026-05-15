@@ -2,7 +2,6 @@ package game.gui;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
-import javafx.animation.PauseTransition;
 import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
@@ -39,6 +38,7 @@ import javafx.scene.effect.DropShadow;
 import java.io.File;
 
 import game.engine.Board;
+import game.engine.Constants;
 import game.engine.Game;
 import game.engine.Role;
 import game.engine.cards.Card;
@@ -72,7 +72,6 @@ public class GameWindow {
     private static final String AMBER_TEXT    = "#fde68a";
     private static final String MUTED         = "#9ca3af";
     private static final String TEXT_LIGHT    = "#f0ece0";
-    private static final String TEXT_DIM      = "#6b7280";
 
     // ── CELL COLOURS ───────────────────────────────────────────────────────
     private static final String[] CELL_NORMAL   = {"#1e1b3a", "#2d2860"};
@@ -98,19 +97,23 @@ public class GameWindow {
     private Label lblPlayerName, lblPlayerType, lblPlayerEnergy;
     private Label tagPlayerRole, tagPlayerShield, tagPlayerConfusion, tagPlayerFreeze;
     private ProgressBar barPlayerEnergy;
-    private Button btnPlayerPowerup, btnRoll, btnCheatGate, btnCheatEnergy;
+    private Button btnPlayerPowerup;
     
     private Label lblOppName, lblOppType, lblOppEnergy;
     private Label tagOppRole, tagOppShield, tagOppConfusion, tagOppFreeze;
     private ProgressBar barOppEnergy;
     private Button btnOppPowerup;
 
+    private Button btnRoll, btnCheatGate, btnCheatEnergy;
     private ImageView diceView;
     private VBox logBox, cardVisualBox;
     private Label lblCardIcon, lblLastCardName, lblLastCardEffect, lblPileCount;
 
     private int lastPlayerEnergy = -1, lastOppEnergy = -1;
 
+    // ══════════════════════════════════════════════════════════════════════
+    // CONSTRUCTOR
+    // ══════════════════════════════════════════════════════════════════════
     public GameWindow(Stage stage, String side) {
         this.stage = stage;
         try {
@@ -130,18 +133,9 @@ public class GameWindow {
 
     private int getDeckSize() {
         try {
-            java.lang.reflect.Method getDeck = game.getClass().getMethod("getDeck");
-            java.util.AbstractCollection<?> deck = (java.util.AbstractCollection<?>) getDeck.invoke(game);
-            return deck.size();
-        } catch (Exception e1) {
-            try {
-                Object board = game.getBoard();
-                java.lang.reflect.Method getDeck = board.getClass().getMethod("getDeck");
-                java.util.AbstractCollection<?> deck = (java.util.AbstractCollection<?>) getDeck.invoke(board);
-                return deck.size();
-            } catch (Exception e2) {
-                return 24; 
-            }
+            return Board.getCards() != null ? Board.getCards().size() : 24;
+        } catch (Exception e) {
+            return 24; 
         }
     }
 
@@ -271,14 +265,14 @@ public class GameWindow {
         lblPlayerEnergy = labelOf("", 12, GOLD, true);
         barPlayerEnergy = energyBar(PURPLE);
 
-        btnPlayerPowerup = actionButton("⚡ USE POWERUP  (500 ⚡)", PURPLE, "#ffffff");
+        btnPlayerPowerup = actionButton("⚡ USE POWERUP", PURPLE, "#ffffff");
         btnPlayerPowerup.setOnAction(e -> handlePowerup());
 
         Region div = new Region(); div.setPrefHeight(1);
         div.setStyle("-fx-background-color:#7c3aed22;");
 
         btnCheatGate   = smallBtn("⚡ TELEPORT",   "#2d2860", "#c4b5fd");
-        btnCheatEnergy = smallBtn("💠 +500 ENERGY", "#2d2860", "#c4b5fd");
+        btnCheatEnergy = smallBtn("💠 +50 ENERGY", "#2d2860", "#c4b5fd");
         btnCheatGate.setOnAction(e -> handleCheatGate());
         btnCheatEnergy.setOnAction(e -> handleCheatEnergy());
         HBox cheats = new HBox(8, btnCheatGate, btnCheatEnergy);
@@ -399,8 +393,7 @@ public class GameWindow {
         lblOppEnergy = labelOf("", 12, GOLD, true);
         barOppEnergy = energyBar(GREEN_DIM);
 
-        // Player 2 Powerup Button
-        btnOppPowerup = actionButton("⚡ USE POWERUP  (500 ⚡)", GREEN_DIM, "#ffffff");
+        btnOppPowerup = actionButton("⚡ USE POWERUP", GREEN_DIM, "#ffffff");
         btnOppPowerup.setOnAction(e -> handlePowerup());
 
         oppCard.getChildren().addAll(
@@ -447,10 +440,7 @@ public class GameWindow {
         pileRow.setAlignment(Pos.CENTER_LEFT);
         pileRow.setPadding(new Insets(6, 0, 0, 0));
         
-        int currentDeckSize = 24;
-        try { currentDeckSize = getDeckSize(); } catch (Exception ignored) {}
-        
-        lblPileCount = labelOf("📚 Pile: " + currentDeckSize + " cards", 10, VIOLET_TEXT, true);
+        lblPileCount = labelOf("📚 Pile: " + getDeckSize() + " cards", 10, VIOLET_TEXT, true);
         lblPileCount.setStyle("-fx-background-color:#7c3aed22;"
                 + "-fx-border-color:#7c3aed55;-fx-border-radius:8;-fx-background-radius:8;-fx-padding:3 8;");
         pileRow.getChildren().add(lblPileCount);
@@ -467,6 +457,9 @@ public class GameWindow {
         return panel;
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // BOARD RENDERING
+    // ══════════════════════════════════════════════════════════════════════
     private void refreshBoard() {
         Monster player   = game.getPlayer();
         Monster opponent = game.getOpponent();
@@ -586,6 +579,9 @@ public class GameWindow {
         return "";
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // STAT PANEL REFRESH (SYNCED TO HUMAN VS HUMAN LOGIC)
+    // ══════════════════════════════════════════════════════════════════════
     private void refreshStats() {
         Monster p = game.getPlayer();
         Monster o = game.getOpponent();
@@ -598,7 +594,7 @@ public class GameWindow {
 
         tagPlayerRole.setText("Role: " + p.getRole());
         setTagVisible(tagPlayerShield,    p.isShielded());
-        setTagVisible(tagPlayerConfusion, p.isConfused(), "😵 Confused");
+        setTagVisible(tagPlayerConfusion, p.isConfused(), "😵 Confused (" + p.getConfusionTurns() + ")");
         setTagVisible(tagPlayerFreeze, p.isFrozen());
 
         lblOppName.setText(o.getName());
@@ -608,29 +604,32 @@ public class GameWindow {
 
         tagOppRole.setText("Role: " + o.getRole());
         setTagVisible(tagOppShield,    o.isShielded());
-        setTagVisible(tagOppConfusion, o.isConfused(), "😵 Confused");
+        setTagVisible(tagOppConfusion, o.isConfused(), "😵 Confused (" + o.getConfusionTurns() + ")");
         setTagVisible(tagOppFreeze, o.isFrozen());
 
-        int currentDeckSize = 0;
-        try { currentDeckSize = getDeckSize(); } catch (Exception ignored) {}
-        lblPileCount.setText("📚 Pile: " + currentDeckSize + " cards");
+        lblPileCount.setText("📚 Pile: " + getDeckSize() + " cards");
 
+        // UI Turn Badge & Highlight Updates
         if (isPlayer1Turn) {
             glowCard(playerCard, true);
             glowCard(oppCard, false);
             styleTurnBadge(lblTurnBadge, p.getName().toUpperCase() + "'S TURN", true);
-            
-            btnPlayerPowerup.setDisable(p.getEnergy() < 500);
-            btnOppPowerup.setDisable(true);
         } else {
             glowCard(playerCard, false);
             glowCard(oppCard, true);
             styleTurnBadge(lblTurnBadge, o.getName().toUpperCase() + "'S TURN", false);
-            
-            btnPlayerPowerup.setDisable(true);
-            btnOppPowerup.setDisable(o.getEnergy() < 500);
         }
 
+        // PERFECTLY SYNCED POWERUP BUTTON STATES
+        boolean p1CanPowerup = p.getEnergy() >= Constants.POWERUP_COST;
+        btnPlayerPowerup.setDisable(!isPlayer1Turn || !p1CanPowerup);
+        btnPlayerPowerup.setText(p1CanPowerup ? "⚡ USE POWERUP (500 ⚡)" : "⚡ POWERUP (LOCKED)");
+
+        boolean p2CanPowerup = o.getEnergy() >= Constants.POWERUP_COST;
+        btnOppPowerup.setDisable(isPlayer1Turn || !p2CanPowerup);
+        btnOppPowerup.setText(p2CanPowerup ? "⚡ USE POWERUP (500 ⚡)" : "⚡ POWERUP (LOCKED)");
+
+        // Allow rolls and cheats for whichever human is currently playing
         btnRoll.setDisable(false);
         btnCheatGate.setDisable(false);
         btnCheatEnergy.setDisable(false);
@@ -688,10 +687,9 @@ public class GameWindow {
         shake.play();
     }
 
-    private void handleRollDice() {
-        performAnimatedRoll();
-    }
-
+    // ══════════════════════════════════════════════════════════════════════
+    // STRICT ENGINE TURN EXECUTION
+    // ══════════════════════════════════════════════════════════════════════
     private void performAnimatedRoll() {
         btnRoll.setDisable(true);
         btnPlayerPowerup.setDisable(true);
@@ -700,12 +698,7 @@ public class GameWindow {
         btnCheatEnergy.setDisable(true);
         playSound("roll.wav");
 
-        int[] finalRoll = {(int)(Math.random() * 6) + 1};
-        try {
-            java.lang.reflect.Method rm = game.getClass().getDeclaredMethod("rollDice");
-            rm.setAccessible(true);
-            finalRoll[0] = (int) rm.invoke(game);
-        } catch (Exception ignored) {}
+        int finalRoll = (int)(Math.random() * 6) + 1;
 
         Timeline anim = new Timeline();
         for (int i = 0; i < 14; i++) {
@@ -718,9 +711,9 @@ public class GameWindow {
         }
         anim.getKeyFrames().add(new KeyFrame(Duration.millis(660), e -> {
             playSound("thud.wav"); shakeScreen();
-            Image img = loadImage("dice" + finalRoll[0] + ".png");
+            Image img = loadImage("dice" + finalRoll + ".png");
             if (img != null) { diceView.setImage(img); diceView.setRotate(0); }
-            executeMove(finalRoll[0]);
+            executeMove(finalRoll);
         }));
         anim.play();
     }
@@ -731,6 +724,7 @@ public class GameWindow {
 
         log(current.getName() + " rolled " + roll, "neutral");
 
+        // --- BULLETPROOF ENGINE SYNC: Peek at Top Card ---
         Card expectedCard = null;
         int deckSizeBefore = 0;
         try {
@@ -747,17 +741,22 @@ public class GameWindow {
             if (current.isFrozen()) {
                 current.setFrozen(false);
                 log(current.getName() + " was frozen — skipping turn.", "bad");
+                game.setCurrent(other);
             } else {
+                
+                // EXECUTE THE ACTUAL ENGINE MOVE
                 game.getBoard().moveMonster(current, roll, other);
                 
+                // --- DETECT IF THE ENGINE PROCESSED A CARD ---
                 int deckSizeAfter = Board.getCards() != null ? Board.getCards().size() : 0;
                 
                 if (deckSizeAfter < deckSizeBefore && expectedCard != null) {
                     playSound("whoosh.wav"); 
                     notifyCardDrawn("🃏", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
                 }
+                
+                game.setCurrent(other);
             }
-            game.setCurrent(other);
         } catch (InvalidMoveException ex) {
             showError("Move Blocked", current.getName() + " cannot move there. The cell is occupied! Roll again.");
             refreshAll(); 
@@ -818,6 +817,9 @@ public class GameWindow {
         showWinScreen(winner, playerWon);
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // POPUPS
+    // ══════════════════════════════════════════════════════════════════════
     private void showWinScreen(Monster winner, boolean playerWon) {
         Stage pop = new Stage();
         pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
@@ -974,7 +976,7 @@ public class GameWindow {
         lblLastCardName.setText(cardName);
         lblLastCardEffect.setText(effect);
         lblPileCount.setText("📚 Pile: " + remainingPile + " cards");
-        log("Card drawn: " + cardName + " — " + effect, "neutral");
+        log("Card drawn: " + cardName, "neutral");
         
         ScaleTransition st = new ScaleTransition(Duration.millis(300), cardVisualBox);
         st.setFromX(0.85); st.setFromY(0.85);
@@ -982,6 +984,9 @@ public class GameWindow {
         st.play();
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // WIDGET FACTORIES (WITH SAFE HOVER HANDLING)
+    // ══════════════════════════════════════════════════════════════════════
     private VBox monsterCard() {
         VBox box = new VBox(8);
         box.setPadding(new Insets(16));
@@ -1040,6 +1045,7 @@ public class GameWindow {
         return pb;
     }
 
+    // Updated to safely handle hover logic without glitching disabled states
     private Button actionButton(String text, String bg, String fg) {
         Button btn = new Button(text);
         btn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
@@ -1047,9 +1053,22 @@ public class GameWindow {
         String base = "-fx-background-color:" + bg + ";-fx-text-fill:" + fg + ";"
                     + "-fx-padding:9 14;-fx-background-radius:10;-fx-border-radius:10;-fx-cursor:hand;";
         String hover = base + "-fx-effect:dropshadow(three-pass-box," + bg + "aa,12,0.4,0,0);";
+        
         btn.setStyle(base);
-        btn.setOnMouseEntered(e -> { btn.setStyle(hover); playSound("flicker.wav"); });
-        btn.setOnMouseExited(e  -> btn.setStyle(base));
+        btn.setOnMouseEntered(e -> { 
+            if (!btn.isDisabled()) {
+                btn.setStyle(hover); 
+                playSound("flicker.wav"); 
+            }
+        });
+        btn.setOnMouseExited(e  -> {
+            btn.setStyle(base);
+        });
+        
+        btn.disabledProperty().addListener((obs, oldVal, newVal) -> {
+            btn.setStyle(base); 
+        });
+
         return btn;
     }
 
