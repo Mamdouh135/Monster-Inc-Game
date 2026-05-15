@@ -128,6 +128,23 @@ public class GameWindow {
         if (game.getOpponent() != null) lastOppEnergy    = game.getOpponent().getEnergy();
     }
 
+    private int getDeckSize() {
+        try {
+            java.lang.reflect.Method getDeck = game.getClass().getMethod("getDeck");
+            java.util.AbstractCollection<?> deck = (java.util.AbstractCollection<?>) getDeck.invoke(game);
+            return deck.size();
+        } catch (Exception e1) {
+            try {
+                Object board = game.getBoard();
+                java.lang.reflect.Method getDeck = board.getClass().getMethod("getDeck");
+                java.util.AbstractCollection<?> deck = (java.util.AbstractCollection<?>) getDeck.invoke(board);
+                return deck.size();
+            } catch (Exception e2) {
+                return 24; 
+            }
+        }
+    }
+
     private void playSound(String f) {
         try {
             File file = new File("assets/" + f);
@@ -152,7 +169,6 @@ public class GameWindow {
         return iv;
     }
 
-    // ── DYNAMIC AVATAR BUILDER ─────────────────────────────────────────────
     private StackPane buildDynamicAvatar(Monster m, String ringColor, int size) {
         StackPane sp = new StackPane();
         sp.setPrefSize(size + 14, size + 14); 
@@ -383,10 +399,9 @@ public class GameWindow {
         lblOppEnergy = labelOf("", 12, GOLD, true);
         barOppEnergy = energyBar(GREEN_DIM);
 
-        btnOppPowerup = actionButton("⚡ POWERUP  (LOCKED)", TEXT_DIM, "#6b7280");
-        btnOppPowerup.setDisable(true);
-        btnOppPowerup.setStyle(btnOppPowerup.getStyle()
-                + "-fx-background-color:#1e1b3a;-fx-border-color:#2d2860;");
+        // Player 2 Powerup Button
+        btnOppPowerup = actionButton("⚡ USE POWERUP  (500 ⚡)", GREEN_DIM, "#ffffff");
+        btnOppPowerup.setOnAction(e -> handlePowerup());
 
         oppCard.getChildren().addAll(
                 avatarRow, lblOppType, oTags.box,
@@ -433,7 +448,7 @@ public class GameWindow {
         pileRow.setPadding(new Insets(6, 0, 0, 0));
         
         int currentDeckSize = 24;
-        try { if(Board.getCards() != null) currentDeckSize = Board.getCards().size(); } catch (Exception ignored) {}
+        try { currentDeckSize = getDeckSize(); } catch (Exception ignored) {}
         
         lblPileCount = labelOf("📚 Pile: " + currentDeckSize + " cards", 10, VIOLET_TEXT, true);
         lblPileCount.setStyle("-fx-background-color:#7c3aed22;"
@@ -537,7 +552,6 @@ public class GameWindow {
             pane.getChildren().add(content);
             StackPane.setAlignment(content, Pos.TOP_CENTER);
 
-            // Tokens layered at the bottom
             boolean hasPlayer = (idx == player.getPosition());
             boolean hasOpp    = (idx == opponent.getPosition());
             if (hasPlayer || hasOpp) {
@@ -598,7 +612,7 @@ public class GameWindow {
         setTagVisible(tagOppFreeze, o.isFrozen());
 
         int currentDeckSize = 0;
-        try { if(Board.getCards() != null) currentDeckSize = Board.getCards().size(); } catch (Exception ignored) {}
+        try { currentDeckSize = getDeckSize(); } catch (Exception ignored) {}
         lblPileCount.setText("📚 Pile: " + currentDeckSize + " cards");
 
         if (isPlayer1Turn) {
@@ -674,6 +688,10 @@ public class GameWindow {
         shake.play();
     }
 
+    private void handleRollDice() {
+        performAnimatedRoll();
+    }
+
     private void performAnimatedRoll() {
         btnRoll.setDisable(true);
         btnPlayerPowerup.setDisable(true);
@@ -713,7 +731,6 @@ public class GameWindow {
 
         log(current.getName() + " rolled " + roll, "neutral");
 
-        // --- PREPARE CARD DETECTION ---
         Card expectedCard = null;
         int deckSizeBefore = 0;
         try {
@@ -731,11 +748,8 @@ public class GameWindow {
                 current.setFrozen(false);
                 log(current.getName() + " was frozen — skipping turn.", "bad");
             } else {
-                
-                // EXECUTE THE ACTUAL ENGINE MOVE
                 game.getBoard().moveMonster(current, roll, other);
                 
-                // --- DETECT IF THE ENGINE DREW A CARD ---
                 int deckSizeAfter = Board.getCards() != null ? Board.getCards().size() : 0;
                 
                 if (deckSizeAfter < deckSizeBefore && expectedCard != null) {
@@ -960,7 +974,7 @@ public class GameWindow {
         lblLastCardName.setText(cardName);
         lblLastCardEffect.setText(effect);
         lblPileCount.setText("📚 Pile: " + remainingPile + " cards");
-        log("Card drawn: " + cardName, "neutral");
+        log("Card drawn: " + cardName + " — " + effect, "neutral");
         
         ScaleTransition st = new ScaleTransition(Duration.millis(300), cardVisualBox);
         st.setFromX(0.85); st.setFromY(0.85);
