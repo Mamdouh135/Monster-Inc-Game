@@ -56,7 +56,12 @@ public class Main extends Application {
         titleBox.setAlignment(Pos.CENTER);
         titleBox.setPadding(new Insets(60, 0, 40, 0));
 
-        Label title = new Label("🚪 DooR DasH");
+        Label title = new Label(" DooR DasH");
+        ImageView titleIcon = loadIcon("boo.png", 45); 
+        if (titleIcon != null) {
+            title.setGraphic(titleIcon);
+        }
+        
         title.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 54));
         title.setTextFill(Color.web(GOLD));
         title.setEffect(new DropShadow(15, Color.web(ORANGE, 0.7)));
@@ -101,7 +106,9 @@ public class Main extends Application {
         bottomBox.setAlignment(Pos.CENTER);
         bottomBox.setPadding(new Insets(0, 0, 50, 0));
 
-        Button btnRules = new Button("📜 HOW TO PLAY");
+        Button btnRules = new Button("HOW TO PLAY");
+        ImageView rulesIcon = loadIcon("scroll.png", 20);
+        if (rulesIcon != null) btnRules.setGraphic(rulesIcon);
         String rulesDef = "-fx-background-color:linear-gradient(to right,#082f49,#064e3b); -fx-text-fill:white; -fx-padding:12 40; -fx-border-radius:10; -fx-background-radius:10; -fx-border-color:" + CYAN + "; -fx-border-width:1.5; -fx-cursor:hand; -fx-font-size: 15px; -fx-font-weight: bold; -fx-font-family: 'Arial';";
         String rulesHov = rulesDef + "-fx-effect:dropshadow(three-pass-box," + CYAN + "88,14,0.5,0,0);";
         btnRules.setStyle(rulesDef);
@@ -157,7 +164,14 @@ public class Main extends Application {
                       + "-fx-border-radius:14;-fx-background-radius:14;"
                       + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
 
-        Label head = new Label("📜 HOW TO PLAY");
+        Label head = new Label(" HOW TO PLAY"); // Emoji removed, left a space for padding
+        
+        // Load the scroll icon (size 26 fits nicely next to a size 22 font)
+        ImageView scrollIcon = loadIcon("scroll.png", 26);
+        if (scrollIcon != null) {
+            head.setGraphic(scrollIcon);
+        }
+        
         head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
         head.setTextFill(Color.web(CYAN));
         head.setEffect(new DropShadow(8, Color.web(CYAN, 0.5)));
@@ -166,33 +180,64 @@ public class Main extends Application {
         rulesBox.setAlignment(Pos.TOP_LEFT);
         
         String[] rules = {
-            "🎯 THE GOAL:",
-            "Race against your opponent to reach Boo's Door (Cell 99) first.",
-            "",
-            "⚡ VITALITY (ENERGY):",
-            "Energy is your lifeblood. Use it to pay Door Tributes or invoke Powerups.",
-            "",
-            "🗺️ THE BOARD:",
-            "• Doors: You must have enough energy to pass, or you'll be stopped.",
-            "• Conveyor Belts (⬆): Instantly launch you forward.",
-            "• Contamination Socks (🧦): Drain your energy and slow you down.",
-            "• Cards (🃏): Draw a random fate that can heal, harm, or teleport you.",
-            "",
-            "✨ POWERUPS:",
-            "Once you amass 500 Energy, you can invoke your monster's unique Powerup to gain a massive advantage. Use it wisely!"
-        };
+                "THE GOAL:",
+                "Race against your opponent to reach Boo's Door (Cell 99) first.",
+                "",
+                "VITALITY (ENERGY):",
+                "Energy is your lifeblood. Use it to pay Door Tributes or invoke Powerups.",
+                "",
+                "THE BOARD:",
+                "Doors: You must have enough energy to pass, or you'll be stopped.",
+                "Conveyor Belts: Instantly launch you forward.",
+                "Contamination Socks: Drain your energy and slow you down.",
+                "Cards: Draw a random fate that can heal, harm, or teleport you.",
+                "",
+                "POWERUPS:",
+                "Once you amass 500 Energy, you can invoke your monster's unique Powerup to gain a massive advantage."
+            };
 
+        // 2. Updated Loop to attach icons dynamically
         for (String line : rules) {
+            // Handle empty spacing lines
+            if (line.isEmpty()) {
+                rulesBox.getChildren().add(new Label(""));
+                continue;
+            }
+
             Label l = new Label(line);
+            ImageView icon = null;
+
+            // Check if the line is a Header (Ends with a colon)
             if (line.endsWith(":")) {
                 l.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 14));
                 l.setTextFill(Color.web(GOLD));
                 VBox.setMargin(l, new Insets(10, 0, 0, 0));
+
+                // Assign header icons based on keywords
+                if (line.contains("GOAL")) icon = loadIcon("target.png", 20);
+                else if (line.contains("VITALITY")) icon = loadIcon("lightning.png", 20);
+                else if (line.contains("BOARD")) icon = loadIcon("map.png", 20);
+                else if (line.contains("POWERUPS")) icon = loadIcon("sparkles.png", 20);
+                
             } else {
+                // Otherwise, it is normal body text
                 l.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
                 l.setTextFill(Color.web(TEXT_LIGHT));
                 l.setWrapText(true);
+                
+                // Assign bullet-point icons for the Board section
+                if (line.startsWith("Doors:")) icon = loadIcon("door_scarer.png", 18);
+                else if (line.startsWith("Conveyor Belts:")) icon = loadIcon("belt.png", 18);
+                else if (line.startsWith("Contamination Socks:")) icon = loadIcon("sock.png", 18);
+                else if (line.startsWith("Cards:")) icon = loadIcon("card.png", 18);
             }
+
+            // If an icon was assigned, attach it to the label
+            if (icon != null) {
+                l.setGraphic(icon);
+                l.setGraphicTextGap(10); // Adds a nice gap between the image and the text
+            }
+            
             rulesBox.getChildren().add(l);
         }
 
@@ -289,7 +334,7 @@ public class Main extends Application {
         if (icon != null) {
             iconPane.getChildren().add(icon);
         } else {
-            Label missing = new Label("👾");
+            Label missing = new Label("ðŸ‘¾");
             missing.setFont(Font.font(70));
             iconPane.getChildren().add(missing);
         }
