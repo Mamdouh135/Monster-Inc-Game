@@ -111,9 +111,7 @@ public class GameWindow {
 
     private int lastPlayerEnergy = -1, lastOppEnergy = -1;
 
-    // ══════════════════════════════════════════════════════════════════════
-    // CONSTRUCTOR
-    // ══════════════════════════════════════════════════════════════════════
+    
     public GameWindow(Stage stage, String side) {
         this.stage = stage;
         try {
@@ -217,7 +215,9 @@ public class GameWindow {
         bar.setStyle("-fx-background-color:linear-gradient(to right,#1e0a3c,#0d1f3c,#1e0a3c);"
                    + "-fx-border-color:#7c3aed44;-fx-border-width:0 0 2 0;");
 
-        Label title = new Label("🚪 DooR DasH");
+        Label title = new Label(" DooR DasH");
+        ImageView titleIcon = loadIcon("door_logo.png", 26);
+        if (titleIcon != null) title.setGraphic(titleIcon);
         title.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 26));
         title.setTextFill(Color.web(GOLD));
         title.setEffect(new DropShadow(10, Color.web(ORANGE, 0.7)));
@@ -255,17 +255,17 @@ public class GameWindow {
 
         lblPlayerType = labelOf("", 11, MUTED, false);
 
-        tagPlayerRole      = makeTag("", BLUE_TEXT,  "#1e3a8a33", "#1e3a8a66");
-        tagPlayerShield    = makeTag("🛡 Shield",  CYAN,        "#0e749022", "#0e749066");
-        tagPlayerConfusion = makeTag("😵 Confused",AMBER_TEXT,  "#d9770622", "#d9770666");
-        tagPlayerFreeze    = makeTag("❄ Frozen",  BLUE_TEXT,   "#0e749022", "#0e749066");
+        tagPlayerRole      = makeTag("", null, BLUE_TEXT,  "#1e3a8a33", "#1e3a8a66");
+        tagPlayerShield    = makeTag(" Shield", "shield.png", CYAN, "#0e749022", "#0e749066");
+        tagPlayerConfusion = makeTag(" Confused", "confused.png", AMBER_TEXT, "#d9770622", "#d9770666");
+        tagPlayerFreeze    = makeTag(" Frozen", "frozen.png", BLUE_TEXT, "#0e749022", "#0e749066");
         
         FlowTags pTags = new FlowTags(tagPlayerRole, tagPlayerShield, tagPlayerConfusion, tagPlayerFreeze);
 
         lblPlayerEnergy = labelOf("", 12, GOLD, true);
         barPlayerEnergy = energyBar(PURPLE);
 
-        btnPlayerPowerup = actionButton("⚡ USE POWERUP", PURPLE, "#ffffff");
+        btnPlayerPowerup = actionButton(" USE POWERUP", "lightning.png", PURPLE, "#ffffff");
         btnPlayerPowerup.setOnAction(e -> handlePowerup());
 
         Region div = new Region(); div.setPrefHeight(1);
@@ -343,7 +343,7 @@ public class GameWindow {
         Image di = loadImage("dice6.png");
         if (di != null) diceView.setImage(di);
 
-        btnRoll = actionButton("🎲  ROLL DICE", GOLD, "#1a0a00");
+        btnRoll = actionButton(" ROLL DICE", "dice_small.png", GOLD, "#1a0a00");
         btnRoll.setPrefHeight(48);
         btnRoll.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 15));
         btnRoll.setOnAction(e -> performAnimatedRoll());
@@ -383,17 +383,17 @@ public class GameWindow {
 
         lblOppType = labelOf("", 11, MUTED, false);
 
-        tagOppRole      = makeTag("", GREEN_TEXT,  "#14532d33", "#14532d66");
-        tagOppShield    = makeTag("🛡 Shield",  CYAN,        "#0e749022", "#0e749066");
-        tagOppConfusion = makeTag("😵 Confused",AMBER_TEXT,  "#d9770622", "#d9770666");
-        tagOppFreeze    = makeTag("❄ Frozen",  BLUE_TEXT,   "#0e749022", "#0e749066");
+        tagOppRole      = makeTag("", null, GREEN_TEXT,  "#14532d33", "#14532d66");
+        tagOppShield    = makeTag(" Shield", "shield.png",  CYAN,        "#0e749022", "#0e749066");
+        tagOppConfusion = makeTag(" Confused", "confused.png",AMBER_TEXT,  "#d9770622", "#d9770666");
+        tagOppFreeze    = makeTag(" Frozen", "frozen.png",  BLUE_TEXT,   "#0e749022", "#0e749066");
         
         FlowTags oTags = new FlowTags(tagOppRole, tagOppShield, tagOppConfusion, tagOppFreeze);
 
         lblOppEnergy = labelOf("", 12, GOLD, true);
         barOppEnergy = energyBar(GREEN_DIM);
 
-        btnOppPowerup = actionButton("⚡ USE POWERUP", GREEN_DIM, "#ffffff");
+        btnOppPowerup = actionButton(" USE POWERUP", "lightning.png", GREEN_DIM, "#ffffff");
         btnOppPowerup.setOnAction(e -> handlePowerup());
 
         oppCard.getChildren().addAll(
@@ -403,13 +403,13 @@ public class GameWindow {
 
         VBox legendCard = infoCard("BOARD LEGEND");
         legendCard.getChildren().addAll(
-                legendRow("🚪", CELL_DOOR_S[1],   "Scarer Door"),
-                legendRow("🎭", CELL_DOOR_L[1],   "Laugher Door"),
-                legendRow("🃏", CELL_CARD[1],     "Card Cell"),
-                legendRow("⬆",  CELL_CONVEYOR[1], "Conveyor Belt"),
-                legendRow("🧦", CELL_SOCK[1],     "Contamination Sock"),
-                legendRow("👾", CELL_MONSTER[1],  "Monster Cell"),
-                legendRow("⬜", CELL_NORMAL[1],   "Normal Cell"));
+                legendRow("door_scarer.png", CELL_DOOR_S[1],   "Scarer Door"),
+                legendRow("door_laugher.png", CELL_DOOR_L[1],   "Laugher Door"),
+                legendRow("card.png", CELL_CARD[1],     "Card Cell"),
+                legendRow("belt.png",  CELL_CONVEYOR[1], "Conveyor Belt"),
+                legendRow("sock.png", CELL_SOCK[1],     "Contamination Sock"),
+                legendRow("monster.png", CELL_MONSTER[1],  "Monster Cell"),
+                legendRow(null, CELL_NORMAL[1],   "Normal Cell"));
 
         VBox cardInfoCard = infoCard("LAST CARD DRAWN");
         cardVisualBox = new VBox(6);
@@ -430,7 +430,9 @@ public class GameWindow {
                 + "-fx-border-radius:8;-fx-background-radius:8;-fx-padding:12;");
         cardVisual.setPrefWidth(60); cardVisual.setMaxWidth(60);
         
-        lblCardIcon = new Label("❔");
+        lblCardIcon = new Label(""); 
+        ImageView mystery = loadIcon("mystery.png", 35);
+        if (mystery != null) lblCardIcon.setGraphic(mystery);
         lblCardIcon.setFont(Font.font(22));
         cardVisual.getChildren().add(lblCardIcon);
 
@@ -457,9 +459,7 @@ public class GameWindow {
         return panel;
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // BOARD RENDERING
-    // ══════════════════════════════════════════════════════════════════════
+    
     private void refreshBoard() {
         Monster player   = game.getPlayer();
         Monster opponent = game.getOpponent();
@@ -482,15 +482,15 @@ public class GameWindow {
             String   tooltip = "Normal Cell " + idx;
 
             if (idx == 0) {
-                colors = CELL_START; icon = "🚦"; tooltip = "Start";
+                colors = CELL_START; icon = ""; tooltip = "Start";
             } else if (idx == 99) {
-                colors = CELL_END; icon = "🏆"; info = "BOO'S DOOR"; tooltip = "Boo's Door — Victory!";
+                colors = CELL_END; icon = ""; info = "BOO'S DOOR"; tooltip = "Boo's Door - Victory!";
             } else if (ec instanceof DoorCell) {
                 DoorCell dc = (DoorCell) ec;
                 boolean isScarer = dc.getRole() == Role.SCARER;
                 colors  = isScarer ? CELL_DOOR_S : CELL_DOOR_L;
-                icon    = isScarer ? "🚪" : "🎭";
-                info    = dc.getEnergy() + " ⚡";
+                icon    = ""; 
+                info    = dc.getEnergy() + " Energy";
                 tooltip = (isScarer ? "SCARER" : "LAUGHER") + " Door  |  Energy: " + dc.getEnergy()
                         + (dc.isActivated() ? "  [Exhausted]" : "  [Fresh]");
                 if (dc.isActivated())
@@ -499,20 +499,20 @@ public class GameWindow {
                 colors = CELL_MONSTER;
                 Monster stationed = ((MonsterCell) ec).getCellMonster();
                 String name = stationed != null ? stationed.getName().split(" ")[0] : "Monster";
-                icon    = "👾";
+                icon    = "";
                 info    = name;
-                tooltip = "Monster Cell — " + (stationed != null ? stationed.getName() : "empty");
+                tooltip = "Monster Cell - " + (stationed != null ? stationed.getName() : "empty");
             } else if (ec instanceof CardCell) {
-                colors  = CELL_CARD; icon = "🃏";
-                tooltip = "Card Cell — draw a random card";
+                colors  = CELL_CARD; icon = "";
+                tooltip = "Card Cell - draw a random card";
             } else if (ec instanceof ConveyorBelt) {
-                colors  = CELL_CONVEYOR; icon = "⬆";
+                colors  = CELL_CONVEYOR; icon = "";
                 info    = "+" + ((ConveyorBelt) ec).getEffect();
-                tooltip = "Conveyor Belt — jump +" + ((ConveyorBelt) ec).getEffect() + " cells";
+                tooltip = "Conveyor Belt - jump +" + ((ConveyorBelt) ec).getEffect() + " cells";
             } else if (ec instanceof ContaminationSock) {
-                colors  = CELL_SOCK; icon = "🧦";
+                colors  = CELL_SOCK; icon = "";
                 info    = "" + ((ContaminationSock) ec).getEffect();
-                tooltip = "Contamination Sock — " + ((ContaminationSock) ec).getEffect() + " cells, −100 ⚡";
+                tooltip = "Contamination Sock - " + ((ContaminationSock) ec).getEffect() + " cells, -100 Energy";
             }
 
             pane.setStyle("-fx-background-color:" + colors[0] + ";"
@@ -579,9 +579,7 @@ public class GameWindow {
         return "";
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // STAT PANEL REFRESH (SYNCED TO HUMAN VS HUMAN LOGIC)
-    // ══════════════════════════════════════════════════════════════════════
+    
     private void refreshStats() {
         Monster p = game.getPlayer();
         Monster o = game.getOpponent();
@@ -687,9 +685,7 @@ public class GameWindow {
         shake.play();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // STRICT ENGINE TURN EXECUTION
-    // ══════════════════════════════════════════════════════════════════════
+   
     private void performAnimatedRoll() {
         btnRoll.setDisable(true);
         btnPlayerPowerup.setDisable(true);
@@ -738,16 +734,17 @@ public class GameWindow {
         } catch (Exception ignored) {}
 
         try {
-            // ── 2. ENGINE IN TOTAL CONTROL ──
+            // --- 2. ENGINE IN TOTAL CONTROL ---
             // We call playTurn(), which internally invokes board.moveMonster() 
             // and strictly utilizes the engine's native move() parameters.
             game.playTurn();
             
-            // ── 3. POST-MOVEMENT CARD CELL DRAW CHECK ──
+            // --- 3. POST-MOVEMENT CARD CELL DRAW CHECK ---
             int deckSizeAfter = Board.getCards() != null ? Board.getCards().size() : 0;
             if (deckSizeAfter < deckSizeBefore && expectedCard != null) {
                 playSound("whoosh.wav"); 
-                notifyCardDrawn("🃏", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
+                // Pass the image filename instead of the emoji!
+                notifyCardDrawn("card.png", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
             }
             
         } catch (InvalidMoveException ex) {
@@ -803,9 +800,7 @@ public class GameWindow {
         showWinScreen(winner, playerWon);
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // POPUPS
-    // ══════════════════════════════════════════════════════════════════════
+    
     private void showWinScreen(Monster winner, boolean playerWon) {
         Stage pop = new Stage();
         pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
@@ -819,8 +814,7 @@ public class GameWindow {
                       + "-fx-border-radius:16;-fx-background-radius:16;"
                       + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),30,0.3,0,10);");
 
-        Label trophy = new Label(playerWon ? "🏆" : "💀");
-        trophy.setFont(Font.font(54));
+        ImageView trophy = loadIcon(playerWon ? "trophy.png" : "skull.png", 65);
 
         Label header = new Label(playerWon ? "VICTORY!" : "DEFEAT");
         header.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 30));
@@ -839,7 +833,7 @@ public class GameWindow {
         scores.setFont(Font.font("Arial", 13));
         scores.setTextFill(Color.web(MUTED));
 
-        Button btnBack = actionButton("↩  RETURN TO MENU", GOLD, "#1a0a00");
+        Button btnBack = actionButton(" RETURN TO MENU", "return.png", GOLD, "#1a0a00");
         btnBack.setPrefWidth(240);
         
         btnBack.setOnAction(e -> {
@@ -872,7 +866,9 @@ public class GameWindow {
                       + "-fx-border-radius:14;-fx-background-radius:14;"
                       + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
 
-        Label head = new Label("⚠  " + title.toUpperCase());
+        Label head = new Label(" " + title.toUpperCase()); // Or "ABANDON GAME?"
+        ImageView warnIcon = loadIcon("warning.png", 26);
+        if (warnIcon != null) head.setGraphic(warnIcon);
         head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
         head.setTextFill(Color.web(RED));
         head.setEffect(new DropShadow(8, Color.web(RED, 0.5)));
@@ -883,7 +879,7 @@ public class GameWindow {
         body.setWrapText(true); body.setMaxWidth(320);
         body.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
-        Button ok = actionButton("CONTINUE", GOLD, "#1a0a00");
+        Button ok = actionButton(" CONTINUE", "check.png", GOLD, "#1a0a00");
         ok.setPrefWidth(180);
         ok.setOnAction(e -> {
             FadeTransition ft = new FadeTransition(Duration.millis(180), layout);
@@ -911,7 +907,9 @@ public class GameWindow {
                       + "-fx-border-radius:14;-fx-background-radius:14;"
                       + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
 
-        Label head = new Label("⚠  ABANDON GAME?");
+        Label head = new Label(" ABANDON GAME?");
+        ImageView warnIcon = loadIcon("warning.png", 26);
+        if (warnIcon != null) head.setGraphic(warnIcon);
         head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
         head.setTextFill(Color.web(RED));
         head.setEffect(new DropShadow(8, Color.web(RED, 0.5)));
@@ -922,14 +920,14 @@ public class GameWindow {
         body.setWrapText(true); body.setMaxWidth(320);
         body.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
-        Button btnCancel = actionButton("CANCEL", "#374151", "#ffffff");
+        Button btnCancel = actionButton("CANCEL", "cancel.png", "#374151", "#ffffff");
         btnCancel.setPrefWidth(130);
         btnCancel.setOnAction(e -> {
             FadeTransition ft = new FadeTransition(Duration.millis(180), layout);
             ft.setToValue(0); ft.setOnFinished(ev -> pop.close()); ft.play();
         });
 
-        Button btnConfirm = actionButton("YES, QUIT", RED, "#ffffff");
+        Button btnConfirm = actionButton("YES, QUIT", null, RED, "#ffffff");
         btnConfirm.setPrefWidth(130);
         btnConfirm.setStyle(btnConfirm.getStyle() + "-fx-effect:dropshadow(three-pass-box," + RED + "aa,10,0.4,0,0);");
         
@@ -957,22 +955,33 @@ public class GameWindow {
         pop.setScene(sc); pop.show();
     }
 
-    public void notifyCardDrawn(String icon, String cardName, String effect, int remainingPile) {
-        lblCardIcon.setText(icon);
+public void notifyCardDrawn(String iconFile, String cardName, String effect, int remainingPile) {
+        
+        // 1. Swap the emoji for the .png image
+        ImageView newIcon = loadIcon(iconFile, 35);
+        if (newIcon != null) {
+            lblCardIcon.setGraphic(newIcon);
+        }
+        lblCardIcon.setText(""); // Clear out the mangled text
+        
+        // 2. Update the card text
         lblLastCardName.setText(cardName);
         lblLastCardEffect.setText(effect);
-        lblPileCount.setText("📚 Pile: " + remainingPile + " cards");
+        
+        // 3. Clean up the pile count string (Emoji removed)
+        lblPileCount.setText("Pile: " + remainingPile + " cards");
+        
+        // 4. The log line stays exactly as it was!
         log("Card drawn: " + cardName, "neutral");
         
+        // 5. Play the pop animation
         ScaleTransition st = new ScaleTransition(Duration.millis(300), cardVisualBox);
         st.setFromX(0.85); st.setFromY(0.85);
         st.setToX(1.0); st.setToY(1.0);
         st.play();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // WIDGET FACTORIES (WITH SAFE HOVER HANDLING)
-    // ══════════════════════════════════════════════════════════════════════
+    
     private VBox monsterCard() {
         VBox box = new VBox(8);
         box.setPadding(new Insets(16));
@@ -996,13 +1005,18 @@ public class GameWindow {
         return box;
     }
 
-    private Label makeTag(String text, String fg, String bg, String border) {
+    // Updated to accept an icon filename
+    private Label makeTag(String text, String iconFile, String fg, String bg, String border) {
         Label l = new Label(text);
         l.setFont(Font.font("Arial", FontWeight.BOLD, 9));
         l.setTextFill(Color.web(fg));
         l.setStyle("-fx-background-color:" + bg + ";"
                  + "-fx-border-color:" + border + ";"
                  + "-fx-border-radius:8;-fx-background-radius:8;-fx-padding:2 7;");
+                 
+        ImageView icon = loadIcon(iconFile, 12);
+        if (icon != null) l.setGraphic(icon);
+        
         return l;
     }
 
@@ -1032,28 +1046,25 @@ public class GameWindow {
     }
 
     // Updated to safely handle hover logic without glitching disabled states
-    private Button actionButton(String text, String bg, String fg) {
+    // Updated to accept an icon filename for the button
+    private Button actionButton(String text, String iconFile, String bg, String fg) {
         Button btn = new Button(text);
         btn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         btn.setMaxWidth(Double.MAX_VALUE);
+        
+        ImageView icon = loadIcon(iconFile, 16);
+        if (icon != null) btn.setGraphic(icon);
+        
         String base = "-fx-background-color:" + bg + ";-fx-text-fill:" + fg + ";"
                     + "-fx-padding:9 14;-fx-background-radius:10;-fx-border-radius:10;-fx-cursor:hand;";
         String hover = base + "-fx-effect:dropshadow(three-pass-box," + bg + "aa,12,0.4,0,0);";
         
         btn.setStyle(base);
         btn.setOnMouseEntered(e -> { 
-            if (!btn.isDisabled()) {
-                btn.setStyle(hover); 
-                playSound("flicker.wav"); 
-            }
+            if (!btn.isDisabled()) { btn.setStyle(hover); playSound("flicker.wav"); }
         });
-        btn.setOnMouseExited(e  -> {
-            btn.setStyle(base);
-        });
-        
-        btn.disabledProperty().addListener((obs, oldVal, newVal) -> {
-            btn.setStyle(base); 
-        });
+        btn.setOnMouseExited(e  -> btn.setStyle(base));
+        btn.disabledProperty().addListener((obs, oldVal, newVal) -> btn.setStyle(base));
 
         return btn;
     }
@@ -1066,17 +1077,23 @@ public class GameWindow {
         return b;
     }
 
-    private HBox legendRow(String icon, String dotColor, String label) {
+    // Updated to use ImageView instead of string labels
+    private HBox legendRow(String iconFile, String dotColor, String label) {
         HBox row = new HBox(8);
         row.setAlignment(Pos.CENTER_LEFT);
         Label dot = new Label("  ");
         dot.setStyle("-fx-background-color:" + dotColor + ";"
                    + "-fx-border-radius:3;-fx-background-radius:3;");
         dot.setPrefSize(10, 10); dot.setMaxSize(10, 10);
-        Label ico = new Label(icon);
+        
+        ImageView ico = loadIcon(iconFile, 14);
+        
         Label txt = new Label(label);
         txt.setFont(Font.font("Arial", 10)); txt.setTextFill(Color.web(MUTED));
-        row.getChildren().addAll(dot, ico, txt);
+        
+        if (ico != null) row.getChildren().addAll(dot, ico, txt);
+        else row.getChildren().addAll(dot, txt); // Fallback if image is missing
+        
         return row;
     }
 
