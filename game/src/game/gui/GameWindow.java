@@ -33,6 +33,8 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import javafx.scene.media.AudioClip;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.effect.DropShadow;
 
 import java.io.File;
@@ -140,15 +142,51 @@ public class GameWindow {
     }
 
     private void playSound(String f) {
+        // AudioClip does not support MP3; use MediaPlayer instead.
+        // Convert any .wav extension to .mp3 since all assets are MP3.
+        String fname = f.endsWith(".wav") ? f.substring(0, f.length() - 4) + ".mp3" : f;
         try {
-            File file = new File("assets/" + f);
-            if (file.exists()) new AudioClip(file.toURI().toString()).play();
+            File file = new File("assets/" + fname);
+            if (!file.exists()) {
+                // Try without extension change as final fallback
+                file = new File("assets/" + f);
+            }
+            if (file.exists()) {
+                Media media = new Media(file.toURI().toString());
+                MediaPlayer mp = new MediaPlayer(media);
+                mp.setOnEndOfMedia(mp::dispose);
+                mp.play();
+            }
         } catch (Exception ignored) {}
     }
 
+    // Maps each monster's exact name (from monsters.csv) to its image filename
+    private static final java.util.Map<String, String> MONSTER_IMG_MAP = new java.util.HashMap<>();
+    static {
+        MONSTER_IMG_MAP.put("James P. Sullivan",   "james_p_sullivan.png");
+        MONSTER_IMG_MAP.put("Mike Wazowski",       "mike_wazowski.png");
+        MONSTER_IMG_MAP.put("Randall Boggs",       "randall_boggs.png");
+        MONSTER_IMG_MAP.put("Celia Mae",           "celia_mae.png");
+        MONSTER_IMG_MAP.put("Roz",                 "roz.png");
+        MONSTER_IMG_MAP.put("Fungus",              "fungus.png");
+        MONSTER_IMG_MAP.put("Henry J. Waternoose", "henry_j_waternoose.png");
+        MONSTER_IMG_MAP.put("Yeti",                "yeti.png");
+    }
+
     private Image loadImage(String f) {
+        // Try relative to working directory first
         try {
             File file = new File("assets/" + f);
+            if (file.exists()) return new Image(file.toURI().toString());
+        } catch (Exception ignored) {}
+        // Try as classpath resource
+        try {
+            java.net.URL url = getClass().getResource("/assets/" + f);
+            if (url != null) return new Image(url.toExternalForm());
+        } catch (Exception ignored) {}
+        // Try absolute from user.dir
+        try {
+            File file = new File(System.getProperty("user.dir") + "/assets/" + f);
             if (file.exists()) return new Image(file.toURI().toString());
         } catch (Exception ignored) {}
         return null;
@@ -158,34 +196,56 @@ public class GameWindow {
         Image img = loadImage(f);
         if (img == null) return null;
         ImageView iv = new ImageView(img);
-        iv.setFitWidth(size); iv.setFitHeight(size);
+        iv.setFitWidth(size);
+        iv.setFitHeight(size);
         iv.setPreserveRatio(true);
+        iv.setSmooth(true);
         return iv;
     }
 
     private StackPane buildDynamicAvatar(Monster m, String ringColor, int size) {
         StackPane sp = new StackPane();
-        sp.setPrefSize(size + 14, size + 14); 
-        sp.setMaxSize(size + 14, size + 14);
-        sp.setStyle("-fx-background-color: #111111; " +
-                    "-fx-border-color: " + ringColor + "; " +
-                    "-fx-border-width: 2.5; " +
-                    "-fx-border-radius: 50%; " +
-                    "-fx-background-radius: 50%; " + 
-                    "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 5, 0, 0, 3);");
+        sp.setPrefSize(size + 10, size + 10);
+        sp.setMaxSize(size + 10, size + 10);
+        sp.setMinSize(size + 10, size + 10);
 
-        String dynamicImgName = m.getClass().getSimpleName().toLowerCase() + ".png";
-        ImageView iv = loadIcon(dynamicImgName, size);
-        
-        if (iv != null) {
-            Circle clip = new Circle(size/2.0, size/2.0, size/2.0);
-            iv.setClip(clip);
-            sp.getChildren().add(iv);
+        // Dark circle background (blends with black-bg images)
+        javafx.scene.shape.Circle bgCircle = new javafx.scene.shape.Circle((size + 10) / 2.0);
+        bgCircle.setFill(Color.BLACK);
+
+        // Look up image by exact monster name — no type-name fallback
+        String imgFile = MONSTER_IMG_MAP.get(m.getName());
+        Image img = (imgFile != null) ? loadImage(imgFile) : null;
+
+        if (img != null) {
+            ImageView iv = new ImageView(img);
+            iv.setFitWidth(size);
+            iv.setFitHeight(size);
+            iv.setPreserveRatio(true);
+            iv.setSmooth(true);
+            StackPane.setAlignment(iv, Pos.CENTER);
+            // Clip to circle — center at (size/2, size/2) in ImageView local coords
+            iv.setClip(new Circle(size / 2.0, size / 2.0, size / 2.0));
+
+            // Colored ring on top
+            javafx.scene.shape.Circle ring = new javafx.scene.shape.Circle((size + 10) / 2.0);
+            ring.setFill(Color.TRANSPARENT);
+            ring.setStroke(Color.web(ringColor));
+            ring.setStrokeWidth(2.5);
+            ring.setEffect(new DropShadow(6, Color.web(ringColor, 0.7)));
+
+            sp.getChildren().addAll(bgCircle, iv, ring);
         } else {
-            Label fallback = new Label(m.getName().substring(0, 1).toUpperCase());
-            fallback.setFont(Font.font("Arial Black", FontWeight.BOLD, size/1.5));
-            fallback.setTextFill(Color.web(ringColor));
-            sp.getChildren().add(fallback);
+            // Fallback: colored letter in a ring
+            javafx.scene.shape.Circle ring = new javafx.scene.shape.Circle((size + 10) / 2.0);
+            ring.setFill(Color.web("#111111"));
+            ring.setStroke(Color.web(ringColor));
+            ring.setStrokeWidth(2.5);
+            Label letter = new Label(m.getName().substring(0, 1).toUpperCase());
+            letter.setFont(Font.font("Arial Black", FontWeight.BOLD, size / 2.0));
+            letter.setTextFill(Color.web(ringColor));
+            StackPane.setAlignment(letter, Pos.CENTER);
+            sp.getChildren().addAll(ring, letter);
         }
         return sp;
     }
@@ -208,6 +268,10 @@ public class GameWindow {
         Scene scene = new Scene(root, 1380, 870);
         stage.setMinWidth(1100); stage.setMinHeight(720);
         stage.setScene(scene);
+        // Re-assert fullscreen after setScene() — setScene() resets it otherwise.
+        // Do NOT call stage.show() here: the stage is already visible from Main.
+        stage.setFullScreen(true);
+        stage.setFullScreenExitHint("");
     }
 
     private HBox buildTopBar() {
@@ -571,7 +635,7 @@ public class GameWindow {
             return ((DoorCell) ec).getRole() == Role.SCARER ? "door_scarer.png" : "door_laugher.png";
         if (ec instanceof MonsterCell) {
             Monster m = ((MonsterCell) ec).getCellMonster();
-            return m != null ? m.getClass().getSimpleName().toLowerCase() + ".png" : "monster.png";
+            String imgF = MONSTER_IMG_MAP.get(m.getName()); return imgF != null ? imgF : "monster.png";
         }
         if (ec instanceof CardCell)    return "card.png";
         if (ec instanceof ConveyorBelt) return "belt.png";
@@ -739,9 +803,8 @@ public class GameWindow {
 
         try {
             // ── 2. ENGINE IN TOTAL CONTROL ──
-            // We call playTurn(), which internally invokes board.moveMonster() 
-            // and strictly utilizes the engine's native move() parameters.
-            game.playTurn();
+            // Pass the same roll the player saw so movement always matches the dice display.
+            game.playTurn(roll);
             
             // ── 3. POST-MOVEMENT CARD CELL DRAW CHECK ──
             int deckSizeAfter = Board.getCards() != null ? Board.getCards().size() : 0;
@@ -808,8 +871,9 @@ public class GameWindow {
     // ══════════════════════════════════════════════════════════════════════
     private void showWinScreen(Monster winner, boolean playerWon) {
         Stage pop = new Stage();
+        pop.initOwner(stage);
         pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-        pop.initStyle(StageStyle.TRANSPARENT);
+        pop.initStyle(StageStyle.UTILITY);
 
         VBox layout = new VBox(20);
         layout.setAlignment(Pos.CENTER);
@@ -852,17 +916,20 @@ public class GameWindow {
         });
 
         layout.getChildren().addAll(trophy, header, detail, scores, btnBack);
-        Scene sc = new Scene(new StackPane(layout)); sc.setFill(Color.TRANSPARENT);
+        StackPane winRoot = new StackPane(layout);
+        winRoot.setStyle("-fx-background-color: #0a0a1a;");
+        Scene sc = new Scene(winRoot);
+        pop.setTitle("Game Over");
         fadeInLayout(layout);
-        
         pop.setScene(sc); pop.show();
     }
 
     private void showError(String title, String msg) {
-        playSound("error.wav"); shakeScreen();
+        playSound("error.mp3"); shakeScreen();
         Stage pop = new Stage();
+        pop.initOwner(stage);
         pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-        pop.initStyle(StageStyle.TRANSPARENT);
+        pop.initStyle(StageStyle.UTILITY);
 
         VBox layout = new VBox(18);
         layout.setAlignment(Pos.CENTER);
@@ -891,17 +958,20 @@ public class GameWindow {
         });
 
         layout.getChildren().addAll(head, body, ok);
-        Scene sc = new Scene(new StackPane(layout)); sc.setFill(Color.TRANSPARENT);
+        StackPane errRoot = new StackPane(layout);
+        errRoot.setStyle("-fx-background-color: #0a0a1a;");
+        Scene sc = new Scene(errRoot);
+        pop.setTitle(title);
         fadeInLayout(layout);
-        
         pop.setScene(sc); pop.show();
     }
 
     private void handleExitPrompt() {
-        playSound("error.wav"); 
+        playSound("error.mp3"); 
         Stage pop = new Stage();
+        pop.initOwner(stage);
         pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-        pop.initStyle(StageStyle.TRANSPARENT);
+        pop.initStyle(StageStyle.UTILITY);
 
         VBox layout = new VBox(18);
         layout.setAlignment(Pos.CENTER);
@@ -944,16 +1014,13 @@ public class GameWindow {
         layout.getChildren().addAll(head, body, btns);
         
         StackPane rootPane = new StackPane(layout);
-        rootPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7); -fx-padding: 20;");
-        
-        Scene sc = new Scene(rootPane); 
-        sc.setFill(Color.TRANSPARENT);
-        
+        rootPane.setStyle("-fx-background-color: #0a0a1a;");
+        Scene sc = new Scene(rootPane);
+        pop.setTitle("Quit Game?");
         layout.setOpacity(0); layout.setTranslateY(24);
         FadeTransition ft = new FadeTransition(Duration.millis(260), layout); ft.setToValue(1);
         TranslateTransition tt = new TranslateTransition(Duration.millis(260), layout); tt.setToY(0);
         ft.play(); tt.play();
-        
         pop.setScene(sc); pop.show();
     }
 
@@ -1044,7 +1111,6 @@ public class GameWindow {
         btn.setOnMouseEntered(e -> { 
             if (!btn.isDisabled()) {
                 btn.setStyle(hover); 
-                playSound("flicker.wav"); 
             }
         });
         btn.setOnMouseExited(e  -> {
@@ -1148,7 +1214,7 @@ public class GameWindow {
                    + "-fx-border-color:#f87171;-fx-border-width:1.5;-fx-cursor:hand;";
         String hov = def + "-fx-effect:dropshadow(three-pass-box," + RED + "88,14,0.5,0,0);";
         btn.setStyle(def);
-        btn.setOnMouseEntered(e -> { btn.setStyle(hov); playSound("flicker.wav"); });
+        btn.setOnMouseEntered(e -> { btn.setStyle(hov); });
         btn.setOnMouseExited(e  -> btn.setStyle(def));
         ImageView ic = loadIcon("exit.png", 16);
         if (ic != null) btn.setGraphic(ic);

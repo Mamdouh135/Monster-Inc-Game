@@ -1,6 +1,5 @@
 package game.engine.cards;
 
-import game.engine.exceptions.GameActionException;
 import game.engine.monsters.Monster;
 
 public abstract class Card {
@@ -32,6 +31,7 @@ public abstract class Card {
 	public boolean isLucky() {
 		return lucky;
 	}
+
 	public abstract void performAction(Monster player, Monster opponent);
 	
 }

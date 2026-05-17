@@ -1,7 +1,10 @@
 package game.gui;
 
 import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.ScaleTransition;
+import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -22,8 +25,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 import javafx.scene.media.AudioClip;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 import java.io.File;
 
@@ -74,7 +80,6 @@ public class Main extends Application {
         selectionBox.setAlignment(Pos.CENTER);
         selectionBox.setPadding(new Insets(0, 50, 40, 50));
 
-        // DYNAMIC TEAM LOGOS (Uses the exact PNG names we agreed on)
         VBox scarerCard = createTeamCard(
             "TEAM SCARER", 
             "Harness the dark energy of screams. Intimidate your foes and seize Boo's door.", 
@@ -105,7 +110,7 @@ public class Main extends Application {
         String rulesDef = "-fx-background-color:linear-gradient(to right,#082f49,#064e3b); -fx-text-fill:white; -fx-padding:12 40; -fx-border-radius:10; -fx-background-radius:10; -fx-border-color:" + CYAN + "; -fx-border-width:1.5; -fx-cursor:hand; -fx-font-size: 15px; -fx-font-weight: bold; -fx-font-family: 'Arial';";
         String rulesHov = rulesDef + "-fx-effect:dropshadow(three-pass-box," + CYAN + "88,14,0.5,0,0);";
         btnRules.setStyle(rulesDef);
-        btnRules.setOnMouseEntered(e -> { btnRules.setStyle(rulesHov); playSound("hover.wav"); });
+        btnRules.setOnMouseEntered(e -> { btnRules.setStyle(rulesHov); });
         btnRules.setOnMouseExited(e -> btnRules.setStyle(rulesDef));
         btnRules.setOnAction(e -> showInstructions());
 
@@ -130,21 +135,160 @@ public class Main extends Application {
         primaryStage.show();
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // LAUNCH GAME WITH FULLSCREEN TRANSITION
+    // ══════════════════════════════════════════════════════════════════════
     private void launchGameWithTransition(Stage stage, String role) {
-        playSound("start.wav");
+        playSound("start.mp3");
+
+        // Step 1: Dark overlay fade-in
         Region fadeOverlay = new Region();
         fadeOverlay.setStyle("-fx-background-color: " + BG_APP + ";");
         fadeOverlay.setOpacity(0);
         rootNode.getChildren().add(fadeOverlay);
 
-        FadeTransition ft = new FadeTransition(Duration.millis(800), fadeOverlay);
-        ft.setToValue(1.0);
-        ft.setOnFinished(e -> new GameWindow(stage, role));
-        ft.play();
+        // Animated loading label
+        Label loadingLabel = new Label("ENTERING THE FLOOR...");
+        loadingLabel.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
+        loadingLabel.setTextFill(Color.web(GOLD));
+        loadingLabel.setEffect(new DropShadow(10, Color.web(ORANGE, 0.8)));
+        loadingLabel.setOpacity(0);
+        rootNode.getChildren().add(loadingLabel);
+
+        // Step 2: Fade overlay in
+        FadeTransition overlayFade = new FadeTransition(Duration.millis(500), fadeOverlay);
+        overlayFade.setToValue(1.0);
+
+        overlayFade.setOnFinished(e -> {
+            // Step 3: Show loading text with fade
+            FadeTransition lblFadeIn = new FadeTransition(Duration.millis(300), loadingLabel);
+            lblFadeIn.setToValue(1.0);
+            lblFadeIn.play();
+
+            // Pulse the loading label
+            Timeline pulse = new Timeline(
+                new KeyFrame(Duration.ZERO,       new KeyValue(loadingLabel.scaleXProperty(), 1.0),
+                                                   new KeyValue(loadingLabel.scaleYProperty(), 1.0)),
+                new KeyFrame(Duration.millis(400), new KeyValue(loadingLabel.scaleXProperty(), 1.08),
+                                                   new KeyValue(loadingLabel.scaleYProperty(), 1.08)),
+                new KeyFrame(Duration.millis(800), new KeyValue(loadingLabel.scaleXProperty(), 1.0),
+                                                   new KeyValue(loadingLabel.scaleYProperty(), 1.0))
+            );
+            pulse.setCycleCount(2);
+
+            // Step 4: After pulse, go fullscreen and launch
+            pulse.setOnFinished(ev -> {
+                // Animate to fullscreen
+                stage.setFullScreen(true);
+                stage.setFullScreenExitHint(""); // Remove default exit hint text
+
+                // Add minimize/restore listener BEFORE switching scene
+                stage.iconifiedProperty().addListener((obs, wasMinimized, isNowMinimized) -> {
+                    if (isNowMinimized) {
+                        showMinimizeWarning(stage);
+                    }
+                });
+
+                // Short pause then switch scene
+                Timeline switchDelay = new Timeline(
+                    new KeyFrame(Duration.millis(250), evSwitch -> {
+                        new GameWindow(stage, role);
+                    })
+                );
+                switchDelay.play();
+            });
+            pulse.play();
+        });
+
+        overlayFade.play();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // MINIMIZE WARNING POPUP
+    // ══════════════════════════════════════════════════════════════════════
+    private void showMinimizeWarning(Stage ownerStage) {
+        Stage pop = new Stage();
+        pop.initModality(javafx.stage.Modality.NONE);
+        pop.initStyle(StageStyle.TRANSPARENT);
+        pop.setAlwaysOnTop(true);
+
+        VBox layout = new VBox(16);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(34, 46, 34, 46));
+        layout.setStyle(
+            "-fx-background-color:linear-gradient(to bottom right,#1a0a2e,#0a0a0f);" +
+            "-fx-border-color:" + GOLD + ";-fx-border-width:2;" +
+            "-fx-border-radius:16;-fx-background-radius:16;" +
+            "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.95),30,0.4,0,10);"
+        );
+
+        Label icon = new Label("🖥");
+        icon.setFont(Font.font(44));
+
+        Label head = new Label("RETURN TO FULL SCREEN");
+        head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 20));
+        head.setTextFill(Color.web(GOLD));
+        head.setEffect(new DropShadow(8, Color.web(GOLD, 0.6)));
+
+        Label body = new Label(
+            "For the best experience, this game is designed\n" +
+            "to be played in full screen mode.\n\n" +
+            "Please restore the window to continue."
+        );
+        body.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        body.setTextFill(Color.web(TEXT_LIGHT));
+        body.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        body.setWrapText(true);
+        body.setMaxWidth(300);
+
+        Button btnRestore = new Button("↩  RESTORE FULL SCREEN");
+        btnRestore.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 13));
+        btnRestore.setStyle(
+            "-fx-background-color:" + GOLD + ";-fx-text-fill:#1a0a00;" +
+            "-fx-padding:11 28;-fx-background-radius:10;-fx-border-radius:10;-fx-cursor:hand;" +
+            "-fx-effect:dropshadow(three-pass-box," + GOLD + "88,12,0.4,0,0);"
+        );
+        btnRestore.setPrefWidth(240);
+        btnRestore.setOnAction(e -> {
+            FadeTransition ft = new FadeTransition(Duration.millis(180), layout);
+            ft.setToValue(0);
+            ft.setOnFinished(ev -> {
+                pop.close();
+                ownerStage.setIconified(false);
+                ownerStage.setFullScreen(true);
+                ownerStage.toFront();
+            });
+            ft.play();
+        });
+
+        layout.getChildren().addAll(icon, head, body, btnRestore);
+
+        StackPane overlay = new StackPane(layout);
+        overlay.setStyle("-fx-background-color: rgba(0,0,0,0.75); -fx-padding: 20;");
+
+        layout.setOpacity(0);
+        layout.setTranslateY(20);
+
+        Scene sc = new Scene(overlay);
+        sc.setFill(Color.TRANSPARENT);
+
+        pop.setScene(sc);
+        pop.show();
+
+        // Centre the popup on the screen
+        javafx.geometry.Rectangle2D screen = javafx.stage.Screen.getPrimary().getVisualBounds();
+        pop.setX((screen.getWidth()  - pop.getWidth())  / 2);
+        pop.setY((screen.getHeight() - pop.getHeight()) / 2);
+
+        // Animate in
+        FadeTransition ft = new FadeTransition(Duration.millis(280), layout);
+        ft.setToValue(1);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(280), layout);
+        tt.setToY(0);
+        ft.play(); tt.play();
     }
 
     private void showInstructions() {
-        playSound("hover.wav");
         Stage pop = new Stage();
         pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
         pop.initStyle(StageStyle.TRANSPARENT);
@@ -221,11 +365,19 @@ public class Main extends Application {
     }
 
     private void playSound(String filename) {
+        // AudioClip does not support MP3; use MediaPlayer.
+        // Auto-convert .wav references to .mp3 (all assets are MP3).
+        String fname = filename.endsWith(".wav")
+            ? filename.substring(0, filename.length() - 4) + ".mp3"
+            : filename;
         try {
-            File file = new File("assets/" + filename);
+            File file = new File("assets/" + fname);
+            if (!file.exists()) file = new File("assets/" + filename);
             if (file.exists()) {
-                AudioClip clip = new AudioClip(file.toURI().toString());
-                clip.play();
+                Media media = new Media(file.toURI().toString());
+                MediaPlayer mp = new MediaPlayer(media);
+                mp.setOnEndOfMedia(mp::dispose);
+                mp.play();
             }
         } catch (Exception e) {}
     }
@@ -272,7 +424,6 @@ public class Main extends Application {
 
         ScaleTransition st = new ScaleTransition(Duration.millis(200), card);
         card.setOnMouseEntered(e -> {
-            playSound("hover.wav");
             card.setStyle(hoverStyle);
             st.setToX(1.03); st.setToY(1.03);
             st.playFromStart();
@@ -283,7 +434,7 @@ public class Main extends Application {
             st.playFromStart();
         });
 
-        ImageView icon = loadIcon(imgFile, 150); // Made menu icons larger (was 120)
+        ImageView icon = loadIcon(imgFile, 150);
         StackPane iconPane = new StackPane();
         iconPane.setMinHeight(160);
         if (icon != null) {
