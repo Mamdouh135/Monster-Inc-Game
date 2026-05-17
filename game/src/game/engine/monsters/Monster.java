@@ -50,10 +50,8 @@ public abstract class Monster implements Comparable<Monster> {
 	public int getEnergy() {
 		return energy;
 	}
-	
+
 	public void setEnergy(int energy) {
-		
-		
 		this.energy = Math.max(Constants.MIN_ENERGY, energy);
 	}
 
@@ -62,9 +60,6 @@ public abstract class Monster implements Comparable<Monster> {
 	}
 
 	public void setPosition(int position) {
-		if(position < 0)
-			this.position=0;
-		else 
 		this.position = position % Constants.BOARD_SIZE;
 	}
 	
@@ -92,47 +87,38 @@ public abstract class Monster implements Comparable<Monster> {
 		this.confusionTurns = confusionTurns;
 	}
 
+	public abstract void executePowerupEffect(Monster opponentMonster);
+	
+	public boolean isConfused() {
+		return confusionTurns > 0;
+	}
+	
+	public void move(int distance) {
+		this.setPosition(this.getPosition() + distance);
+	}
+	
+	public final void alterEnergy(int energy) {
+		if (shielded && energy < 0) {
+			System.out.println(name + "'s shield blocked " + (-energy) + " damage!");
+			shielded = false; // Shield breaks after one use
+		}
+		
+		else 
+			this.setEnergy(this.getEnergy() + energy);	
+	}
+	
+	public void decrementConfusion() {
+		if (isConfused()) {
+			this.setConfusionTurns(this.getConfusionTurns() - 1);
+			
+			if(!isConfused())
+				this.setRole(originalRole);
+		}
+	}
+
 	@Override
 	public int compareTo(Monster other) {
 		return this.position - other.position;
 	}
-	
-	abstract public void executePowerupEffect(Monster opponentMonster);
-	
-	public boolean isConfused(){
-		if(this.getConfusionTurns() == 0)
-			return false;
-		return true;
-	}
-	
-	public void move(int distance){
-		this.setPosition(this.getPosition()  + distance);
-	}
-	
-	
-	public final void alterEnergy(int energy){
-		if(energy < 0 && this.isShielded())
-			this.setShielded(false);
-		else
-			this.setEnergy(this.getEnergy() + energy);
-				
-		
-	}
-	
-	public void decrementConfusion(){
-		if(!(this.isConfused()))
-			return;
-		else{
-			this.confusionTurns-=1;
-			if(!(this.isConfused()))
-				this.setRole(originalRole);
-		}
-			
-		
-		
-	}
-	
-	
-	
 
 }

@@ -1,29 +1,20 @@
 package game.engine.monsters;
 
-import game.engine.*;
+import game.engine.Role;
 
 public class Dynamo extends Monster {
 	
 	public Dynamo(String name, String description, Role role, int energy) {
 		super(name, description, role, energy);
 	}
-  
-	public void executePowerupEffect(Monster opponentMonster){
+	
+	@Override
+	public void executePowerupEffect(Monster opponentMonster) {
 		opponentMonster.setFrozen(true);
-		
-		
 	}
 	
+	@Override
 	public void setEnergy(int energy) {
-		int change = energy - this.getEnergy();
-
-		int doubleChange=2*change;
-		super.setEnergy(this.getEnergy()+doubleChange);
-		
+		super.setEnergy(getEnergy() + (energy - getEnergy()) * 2);
 	}
-	
-	
-	
-	
-	
 }
