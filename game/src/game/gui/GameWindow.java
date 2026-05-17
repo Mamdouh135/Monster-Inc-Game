@@ -283,7 +283,11 @@ public class GameWindow {
         bar.setStyle("-fx-background-color:linear-gradient(to right,#1e0a3c,#0d1f3c,#1e0a3c);"
                    + "-fx-border-color:#7c3aed44;-fx-border-width:0 0 2 0;");
 
-        Label title = new Label("ðŸšª DooR DasH");
+        Label title = new Label(" DooR DasH");
+        ImageView titleIcon = loadIcon("boo.png", 30);
+        if (titleIcon != null) {
+            title.setGraphic(titleIcon);
+        }
         title.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 26));
         title.setTextFill(Color.web(GOLD));
         title.setEffect(new DropShadow(10, Color.web(ORANGE, 0.7)));
@@ -306,7 +310,7 @@ public class GameWindow {
         panel.setPrefWidth(260);
         panel.setPadding(new Insets(18));
 
-        panel.getChildren().add(panelLabel("âš¡ PLAYER 1"));
+        panel.getChildren().add(panelLabel("PLAYER 1"));
 
         playerCard = monsterCard();
 
@@ -409,7 +413,11 @@ public class GameWindow {
         Image di = loadImage("dice6.png");
         if (di != null) diceView.setImage(di);
 
-        btnRoll = actionButton("ðŸŽ²  ROLL DICE", GOLD, "#1a0a00");
+        btnRoll = actionButton(" ROLL DICE", GOLD, "#1a0a00");
+        ImageView diceIcon = loadIcon("dice_small.png", 22);
+        if (diceIcon != null) {
+            btnRoll.setGraphic(diceIcon);
+        }
         btnRoll.setPrefHeight(48);
         btnRoll.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 15));
         btnRoll.setOnAction(e -> performAnimatedRoll());
@@ -434,7 +442,7 @@ public class GameWindow {
         panel.setPrefWidth(260);
         panel.setPadding(new Insets(18));
 
-        panel.getChildren().add(panelLabel("ðŸŽ¯ PLAYER 2"));
+        panel.getChildren().add(panelLabel("PLAYER 2"));
 
         oppCard = monsterCard();
 
@@ -496,7 +504,11 @@ public class GameWindow {
                 + "-fx-border-radius:8;-fx-background-radius:8;-fx-padding:12;");
         cardVisual.setPrefWidth(60); cardVisual.setMaxWidth(60);
         
-        lblCardIcon = new Label("â�”");
+        lblCardIcon = new Label("");
+        ImageView mysteryIcon = loadIcon("mystery.png", 35);
+        if (mysteryIcon != null) {
+            lblCardIcon.setGraphic(mysteryIcon);
+        }
         lblCardIcon.setFont(Font.font(22));
         cardVisual.getChildren().add(lblCardIcon);
 
@@ -513,7 +525,7 @@ public class GameWindow {
 
         cardInfoCard.getChildren().addAll(cardVisualBox, pileRow);
 
-        Button btnExit = new Button("âš   ABANDON GAME");
+        Button btnExit = new Button("ABANDON GAME");
         btnExit.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 13));
         btnExit.setMaxWidth(Double.MAX_VALUE);
         VBox.setMargin(btnExit, new Insets(12, 0, 0, 0));
@@ -983,7 +995,7 @@ public class GameWindow {
                       + "-fx-border-radius:14;-fx-background-radius:14;"
                       + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
 
-        Label head = new Label("âš   ABANDON GAME?");
+        Label head = new Label("ABANDON GAME?");
         head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
         head.setTextFill(Color.web(RED));
         head.setEffect(new DropShadow(8, Color.web(RED, 0.5)));
@@ -1198,7 +1210,7 @@ public class GameWindow {
     }
 
     private void styleTurnBadge(Label lbl, String text, boolean isP1) {
-        lbl.setText("â–¶  " + text);
+        lbl.setText("" + text);
         if (isP1) {
             lbl.setStyle("-fx-background-color:" + GOLD + ";-fx-text-fill:#1a0a00;"
                        + "-fx-border-radius:20;-fx-background-radius:20;-fx-padding:5 16;"
