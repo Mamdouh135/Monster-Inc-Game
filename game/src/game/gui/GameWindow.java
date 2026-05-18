@@ -32,7 +32,6 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
-import javafx.scene.media.AudioClip;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.effect.DropShadow;
@@ -51,7 +50,7 @@ import game.engine.exceptions.OutOfEnergyException;
 
 public class GameWindow {
 
-    // â”€â”€ PALETTE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // === PALETTE ===
     private static final String BG_APP        = "#0a0a1a";
     private static final String BG_CARD       = "linear-gradient(to bottom right, #12082a, #1a1040)";
     private static final String BG_BOARD      = "#0d0d22";
@@ -61,7 +60,6 @@ public class GameWindow {
 
     private static final String PURPLE        = "#7c3aed";
     private static final String PURPLE_DIM    = "#7c3aed22";
-    private static final String PURPLE_BORDER = "#7c3aed44";
     private static final String GOLD          = "#fbbf24";
     private static final String ORANGE        = "#f97316";
     private static final String GREEN         = "#10b981";
@@ -76,7 +74,7 @@ public class GameWindow {
     private static final String MUTED         = "#9ca3af";
     private static final String TEXT_LIGHT    = "#f0ece0";
 
-    // â”€â”€ CELL COLOURS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // === CELL COLOURS ===
     private static final String[] CELL_NORMAL   = {"#1e1b3a", "#2d2860"};
     private static final String[] CELL_DOOR_S   = {"rgba(30,58,138,0.25)", "#1e3a8a"};
     private static final String[] CELL_DOOR_L   = {"rgba(20,83,45,0.25)",  "#22c55e"};
@@ -87,7 +85,7 @@ public class GameWindow {
     private static final String[] CELL_START    = {"rgba(107,114,128,0.2)","#9ca3af"};
     private static final String[] CELL_END      = {"rgba(251,191,36,0.2)", "#fbbf24"};
 
-    // â”€â”€ STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // === STATE ===
     private final Stage stage;
     private Game game;
     private BorderPane mainLayout;
@@ -114,9 +112,9 @@ public class GameWindow {
 
     private int lastPlayerEnergy = -1, lastOppEnergy = -1;
 
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
     // CONSTRUCTOR
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
     public GameWindow(Stage stage, String side) {
         this.stage = stage;
         try {
@@ -143,13 +141,10 @@ public class GameWindow {
     }
 
     private void playSound(String f) {
-        // AudioClip does not support MP3; use MediaPlayer instead.
-        // Convert any .wav extension to .mp3 since all assets are MP3.
         String fname = f.endsWith(".wav") ? f.substring(0, f.length() - 4) + ".mp3" : f;
         try {
             File file = new File("assets/" + fname);
             if (!file.exists()) {
-                // Try without extension change as final fallback
                 file = new File("assets/" + f);
             }
             if (file.exists()) {
@@ -161,7 +156,6 @@ public class GameWindow {
         } catch (Exception ignored) {}
     }
 
-    // Maps each monster's exact name (from monsters.csv) to its image filename
     private static final java.util.Map<String, String> MONSTER_IMG_MAP = new java.util.HashMap<>();
     static {
         MONSTER_IMG_MAP.put("James P. Sullivan",   "james_p_sullivan.png");
@@ -175,17 +169,14 @@ public class GameWindow {
     }
 
     private Image loadImage(String f) {
-        // Try relative to working directory first
         try {
             File file = new File("assets/" + f);
             if (file.exists()) return new Image(file.toURI().toString());
         } catch (Exception ignored) {}
-        // Try as classpath resource
         try {
             java.net.URL url = getClass().getResource("/assets/" + f);
             if (url != null) return new Image(url.toExternalForm());
         } catch (Exception ignored) {}
-        // Try absolute from user.dir
         try {
             File file = new File(System.getProperty("user.dir") + "/assets/" + f);
             if (file.exists()) return new Image(file.toURI().toString());
@@ -210,11 +201,9 @@ public class GameWindow {
         sp.setMaxSize(size + 10, size + 10);
         sp.setMinSize(size + 10, size + 10);
 
-        // Dark circle background (blends with black-bg images)
         javafx.scene.shape.Circle bgCircle = new javafx.scene.shape.Circle((size + 10) / 2.0);
         bgCircle.setFill(Color.BLACK);
 
-        // Look up image by exact monster name â€” no type-name fallback
         String imgFile = MONSTER_IMG_MAP.get(m.getName());
         Image img = (imgFile != null) ? loadImage(imgFile) : null;
 
@@ -225,10 +214,8 @@ public class GameWindow {
             iv.setPreserveRatio(true);
             iv.setSmooth(true);
             StackPane.setAlignment(iv, Pos.CENTER);
-            // Clip to circle â€” center at (size/2, size/2) in ImageView local coords
             iv.setClip(new Circle(size / 2.0, size / 2.0, size / 2.0));
 
-            // Colored ring on top
             javafx.scene.shape.Circle ring = new javafx.scene.shape.Circle((size + 10) / 2.0);
             ring.setFill(Color.TRANSPARENT);
             ring.setStroke(Color.web(ringColor));
@@ -237,7 +224,6 @@ public class GameWindow {
 
             sp.getChildren().addAll(bgCircle, iv, ring);
         } else {
-            // Fallback: colored letter in a ring
             javafx.scene.shape.Circle ring = new javafx.scene.shape.Circle((size + 10) / 2.0);
             ring.setFill(Color.web("#111111"));
             ring.setStroke(Color.web(ringColor));
@@ -266,7 +252,6 @@ public class GameWindow {
         root.setFitToWidth(true); root.setFitToHeight(true);
         root.setStyle("-fx-background:" + BG_APP + "; -fx-border-color:" + BG_APP + ";");
 
-        // --- NEW: Wrap the scroll pane in our overlay ---
         rootOverlay = new StackPane(root);
         
         Scene scene = new Scene(rootOverlay, 1380, 870);
@@ -284,16 +269,16 @@ public class GameWindow {
                    + "-fx-border-color:#7c3aed44;-fx-border-width:0 0 2 0;");
 
         Label title = new Label(" DooR DasH");
-        ImageView titleIcon = loadIcon("boo.png", 30);
+        ImageView titleIcon = loadIcon("boo.png", 34);
         if (titleIcon != null) {
             title.setGraphic(titleIcon);
         }
-        title.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 26));
+        title.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 32));
         title.setTextFill(Color.web(GOLD));
         title.setEffect(new DropShadow(10, Color.web(ORANGE, 0.7)));
 
         Label sub = new Label("SCARE VS LAUGH TOUCHDOWN");
-        sub.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+        sub.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         sub.setTextFill(Color.web(MUTED));
 
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -307,7 +292,7 @@ public class GameWindow {
 
     private VBox buildLeftPanel() {
         VBox panel = new VBox(12);
-        panel.setPrefWidth(260);
+        panel.setPrefWidth(320);
         panel.setPadding(new Insets(18));
 
         panel.getChildren().add(panelLabel("PLAYER 1"));
@@ -317,32 +302,32 @@ public class GameWindow {
         HBox avatarRow = new HBox(12);
         avatarRow.setAlignment(Pos.CENTER_LEFT);
         
-        StackPane avatar = buildDynamicAvatar(game.getPlayer(), PURPLE, 48);
+        StackPane avatar = buildDynamicAvatar(game.getPlayer(), PURPLE, 64);
         
-        lblPlayerName = labelOf("", 17, TEXT_LIGHT, true);
+        lblPlayerName = labelOf("", 22, TEXT_LIGHT, true);
         VBox nameCol = new VBox(2, lblPlayerName);
         avatarRow.getChildren().addAll(avatar, nameCol);
 
-        lblPlayerType = labelOf("", 11, MUTED, false);
+        lblPlayerType = labelOf("", 14, MUTED, false);
 
         tagPlayerRole      = makeTag("", BLUE_TEXT,  "#1e3a8a33", "#1e3a8a66");
-        tagPlayerShield    = makeTag("ðŸ›¡ Shield",  CYAN,        "#0e749022", "#0e749066");
-        tagPlayerConfusion = makeTag("ðŸ˜µ Confused",AMBER_TEXT,  "#d9770622", "#d9770666");
-        tagPlayerFreeze    = makeTag("â�„ Frozen",  BLUE_TEXT,   "#0e749022", "#0e749066");
+        tagPlayerShield    = makeTag("[Shield]",  CYAN,        "#0e749022", "#0e749066");
+        tagPlayerConfusion = makeTag("[Confused]",AMBER_TEXT,  "#d9770622", "#d9770666");
+        tagPlayerFreeze    = makeTag("[Frozen]",  BLUE_TEXT,   "#0e749022", "#0e749066");
         
         FlowTags pTags = new FlowTags(tagPlayerRole, tagPlayerShield, tagPlayerConfusion, tagPlayerFreeze);
 
-        lblPlayerEnergy = labelOf("", 12, GOLD, true);
+        lblPlayerEnergy = labelOf("", 16, GOLD, true);
         barPlayerEnergy = energyBar(PURPLE);
 
-        btnPlayerPowerup = actionButton("âš¡ USE POWERUP", PURPLE, "#ffffff");
+        btnPlayerPowerup = actionButton("USE POWERUP", PURPLE, "#ffffff");
         btnPlayerPowerup.setOnAction(e -> handlePowerup());
 
         Region div = new Region(); div.setPrefHeight(1);
         div.setStyle("-fx-background-color:#7c3aed22;");
 
-        btnCheatGate   = smallBtn("âš¡ TELEPORT",   "#2d2860", "#c4b5fd");
-        btnCheatEnergy = smallBtn("ðŸ’  +50 ENERGY", "#2d2860", "#c4b5fd");
+        btnCheatGate   = smallBtn("TELEPORT",   "#2d2860", "#c4b5fd");
+        btnCheatEnergy = smallBtn("+50 ENERGY", "#2d2860", "#c4b5fd");
         btnCheatGate.setOnAction(e -> handleCheatGate());
         btnCheatEnergy.setOnAction(e -> handleCheatEnergy());
         HBox cheats = new HBox(8, btnCheatGate, btnCheatEnergy);
@@ -385,8 +370,8 @@ public class GameWindow {
             cell.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
             Label num = new Label(String.valueOf(idx));
-            num.setFont(Font.font("Arial", FontWeight.BOLD, 8));
-            num.setTextFill(Color.web("#ffffff44"));
+            num.setFont(Font.font("Arial", FontWeight.BOLD, 14)); 
+            num.setTextFill(Color.web("#ffffff55"));
             StackPane.setAlignment(num, Pos.TOP_LEFT);
             StackPane.setMargin(num, new Insets(2, 0, 0, 3));
             cell.getChildren().add(num);
@@ -409,17 +394,17 @@ public class GameWindow {
                    + "-fx-border-radius:14;-fx-background-radius:14;");
 
         diceView = new ImageView();
-        diceView.setFitWidth(54); diceView.setFitHeight(54);
+        diceView.setFitWidth(70); diceView.setFitHeight(70);
         Image di = loadImage("dice6.png");
         if (di != null) diceView.setImage(di);
 
-        btnRoll = actionButton(" ROLL DICE", GOLD, "#1a0a00");
-        ImageView diceIcon = loadIcon("dice_small.png", 22);
+        btnRoll = actionButton("ROLL DICE", GOLD, "#1a0a00");
+        ImageView diceIcon = loadIcon("dice_small.png", 26);
         if (diceIcon != null) {
             btnRoll.setGraphic(diceIcon);
         }
         btnRoll.setPrefHeight(48);
-        btnRoll.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 15));
+        btnRoll.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 20));
         btnRoll.setOnAction(e -> performAnimatedRoll());
 
         logBox = new VBox(4);
@@ -439,7 +424,7 @@ public class GameWindow {
 
     private VBox buildRightPanel() {
         VBox panel = new VBox(12);
-        panel.setPrefWidth(260);
+        panel.setPrefWidth(320);
         panel.setPadding(new Insets(18));
 
         panel.getChildren().add(panelLabel("PLAYER 2"));
@@ -449,25 +434,25 @@ public class GameWindow {
         HBox avatarRow = new HBox(12);
         avatarRow.setAlignment(Pos.CENTER_LEFT);
         
-        StackPane avatar = buildDynamicAvatar(game.getOpponent(), GREEN_DIM, 48);
+        StackPane avatar = buildDynamicAvatar(game.getOpponent(), GREEN_DIM, 64);
         
-        lblOppName = labelOf("", 17, TEXT_LIGHT, true);
+        lblOppName = labelOf("", 22, TEXT_LIGHT, true);
         VBox nameCol = new VBox(2, lblOppName);
         avatarRow.getChildren().addAll(avatar, nameCol);
 
-        lblOppType = labelOf("", 11, MUTED, false);
+        lblOppType = labelOf("", 14, MUTED, false);
 
         tagOppRole      = makeTag("", GREEN_TEXT,  "#14532d33", "#14532d66");
-        tagOppShield    = makeTag("ðŸ›¡ Shield",  CYAN,        "#0e749022", "#0e749066");
-        tagOppConfusion = makeTag("ðŸ˜µ Confused",AMBER_TEXT,  "#d9770622", "#d9770666");
-        tagOppFreeze    = makeTag("â�„ Frozen",  BLUE_TEXT,   "#0e749022", "#0e749066");
+        tagOppShield    = makeTag("[Shield]",  CYAN,        "#0e749022", "#0e749066");
+        tagOppConfusion = makeTag("[Confused]",AMBER_TEXT,  "#d9770622", "#d9770666");
+        tagOppFreeze    = makeTag("[Frozen]",  BLUE_TEXT,   "#0e749022", "#0e749066");
         
         FlowTags oTags = new FlowTags(tagOppRole, tagOppShield, tagOppConfusion, tagOppFreeze);
 
-        lblOppEnergy = labelOf("", 12, GOLD, true);
+        lblOppEnergy = labelOf("", 16, GOLD, true);
         barOppEnergy = energyBar(GREEN_DIM);
 
-        btnOppPowerup = actionButton("âš¡ USE POWERUP", GREEN_DIM, "#ffffff");
+        btnOppPowerup = actionButton("USE POWERUP", GREEN_DIM, "#ffffff");
         btnOppPowerup.setOnAction(e -> handlePowerup());
 
         oppCard.getChildren().addAll(
@@ -477,13 +462,13 @@ public class GameWindow {
 
         VBox legendCard = infoCard("BOARD LEGEND");
         legendCard.getChildren().addAll(
-                legendRow("ðŸšª", CELL_DOOR_S[1],   "Scarer Door"),
-                legendRow("ðŸŽ­", CELL_DOOR_L[1],   "Laugher Door"),
-                legendRow("ðŸƒ�", CELL_CARD[1],     "Card Cell"),
-                legendRow("â¬†",  CELL_CONVEYOR[1], "Conveyor Belt"),
-                legendRow("ðŸ§¦", CELL_SOCK[1],     "Contamination Sock"),
-                legendRow("ðŸ‘¾", CELL_MONSTER[1],  "Monster Cell"),
-                legendRow("â¬œ", CELL_NORMAL[1],   "Normal Cell"));
+                legendRow("[D]", CELL_DOOR_S[1],   "Scarer Door"),
+                legendRow("[L]", CELL_DOOR_L[1],   "Laugher Door"),
+                legendRow("[C]", CELL_CARD[1],     "Card Cell"),
+                legendRow("[^]", CELL_CONVEYOR[1], "Conveyor Belt"),
+                legendRow("[S]", CELL_SOCK[1],     "Contam. Sock"),
+                legendRow("[M]", CELL_MONSTER[1],  "Monster Cell"),
+                legendRow("[_]", CELL_NORMAL[1],   "Normal Cell"));
 
         VBox cardInfoCard = infoCard("LAST CARD DRAWN");
         cardVisualBox = new VBox(6);
@@ -493,8 +478,8 @@ public class GameWindow {
                 + "-fx-border-color:#7c3aed55;-fx-border-style:dashed;"
                 + "-fx-border-radius:10;-fx-background-radius:10;");
 
-        lblLastCardName   = labelOf("Unknown", 13, VIOLET_TEXT, true);
-        lblLastCardEffect = labelOf("Land on a Card Cell to reveal your fate.", 10, MUTED, false);
+        lblLastCardName   = labelOf("Unknown", 18, VIOLET_TEXT, true);
+        lblLastCardEffect = labelOf("Land on a Card Cell to reveal your fate.", 14, MUTED, false);
         lblLastCardEffect.setWrapText(true);
 
         VBox cardVisual = new VBox(4);
@@ -502,14 +487,14 @@ public class GameWindow {
         cardVisual.setStyle("-fx-background-color:linear-gradient(to bottom right,#4c1d95,#1e1b3a);"
                 + "-fx-border-color:#7c3aed;-fx-border-width:1.5;"
                 + "-fx-border-radius:8;-fx-background-radius:8;-fx-padding:12;");
-        cardVisual.setPrefWidth(60); cardVisual.setMaxWidth(60);
+        cardVisual.setPrefWidth(70); cardVisual.setMaxWidth(70);
         
         lblCardIcon = new Label("");
-        ImageView mysteryIcon = loadIcon("mystery.png", 35);
+        ImageView mysteryIcon = loadIcon("mystery.png", 50);
         if (mysteryIcon != null) {
             lblCardIcon.setGraphic(mysteryIcon);
         }
-        lblCardIcon.setFont(Font.font(22));
+        lblCardIcon.setFont(Font.font(26));
         cardVisual.getChildren().add(lblCardIcon);
 
         cardVisualBox.getChildren().addAll(cardVisual, lblLastCardName, lblLastCardEffect);
@@ -518,7 +503,7 @@ public class GameWindow {
         pileRow.setAlignment(Pos.CENTER_LEFT);
         pileRow.setPadding(new Insets(6, 0, 0, 0));
         
-        lblPileCount = labelOf("ðŸ“š Pile: " + getDeckSize() + " cards", 10, VIOLET_TEXT, true);
+        lblPileCount = labelOf("Deck: " + getDeckSize() + " cards", 14, VIOLET_TEXT, true);
         lblPileCount.setStyle("-fx-background-color:#7c3aed22;"
                 + "-fx-border-color:#7c3aed55;-fx-border-radius:8;-fx-background-radius:8;-fx-padding:3 8;");
         pileRow.getChildren().add(lblPileCount);
@@ -526,7 +511,7 @@ public class GameWindow {
         cardInfoCard.getChildren().addAll(cardVisualBox, pileRow);
 
         Button btnExit = new Button("ABANDON GAME");
-        btnExit.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 13));
+        btnExit.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 16));
         btnExit.setMaxWidth(Double.MAX_VALUE);
         VBox.setMargin(btnExit, new Insets(12, 0, 0, 0));
         styleExitButton(btnExit);
@@ -535,9 +520,9 @@ public class GameWindow {
         return panel;
     }
 
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
     // BOARD RENDERING
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
     private void refreshBoard() {
         Monster player   = game.getPlayer();
         Monster opponent = game.getOpponent();
@@ -560,15 +545,15 @@ public class GameWindow {
             String   tooltip = "Normal Cell " + idx;
 
             if (idx == 0) {
-                colors = CELL_START; icon = "ðŸš¦"; tooltip = "Start";
+                colors = CELL_START; icon = "[START]"; tooltip = "Start";
             } else if (idx == 99) {
-                colors = CELL_END; icon = "ðŸ�†"; info = "BOO'S DOOR"; tooltip = "Boo's Door â€” Victory!";
+                colors = CELL_END; icon = "[END]"; info = "BOO'S DOOR"; tooltip = "Boo's Door";
             } else if (ec instanceof DoorCell) {
                 DoorCell dc = (DoorCell) ec;
                 boolean isScarer = dc.getRole() == Role.SCARER;
                 colors  = isScarer ? CELL_DOOR_S : CELL_DOOR_L;
-                icon    = isScarer ? "ðŸšª" : "ðŸŽ­";
-                info    = dc.getEnergy() + " âš¡";
+                icon    = isScarer ? "[SCARER]" : "[LAUGH]";
+                info    = dc.getEnergy() + " E";
                 tooltip = (isScarer ? "SCARER" : "LAUGHER") + " Door  |  Energy: " + dc.getEnergy()
                         + (dc.isActivated() ? "  [Exhausted]" : "  [Fresh]");
                 if (dc.isActivated())
@@ -577,20 +562,20 @@ public class GameWindow {
                 colors = CELL_MONSTER;
                 Monster stationed = ((MonsterCell) ec).getCellMonster();
                 String name = stationed != null ? stationed.getName().split(" ")[0] : "Monster";
-                icon    = "ðŸ‘¾";
+                icon    = "[MONSTER]";
                 info    = name;
-                tooltip = "Monster Cell â€” " + (stationed != null ? stationed.getName() : "empty");
+                tooltip = "Monster Cell - " + (stationed != null ? stationed.getName() : "empty");
             } else if (ec instanceof CardCell) {
-                colors  = CELL_CARD; icon = "ðŸƒ�";
-                tooltip = "Card Cell â€” draw a random card";
+                colors  = CELL_CARD; icon = "[CARD]";
+                tooltip = "Card Cell";
             } else if (ec instanceof ConveyorBelt) {
-                colors  = CELL_CONVEYOR; icon = "â¬†";
+                colors  = CELL_CONVEYOR; icon = "[JUMP]";
                 info    = "+" + ((ConveyorBelt) ec).getEffect();
-                tooltip = "Conveyor Belt â€” jump +" + ((ConveyorBelt) ec).getEffect() + " cells";
+                tooltip = "Conveyor Belt";
             } else if (ec instanceof ContaminationSock) {
-                colors  = CELL_SOCK; icon = "ðŸ§¦";
+                colors  = CELL_SOCK; icon = "[SOCK]";
                 info    = "" + ((ContaminationSock) ec).getEffect();
-                tooltip = "Contamination Sock â€” " + ((ContaminationSock) ec).getEffect() + " cells, âˆ’100 âš¡";
+                tooltip = "Contamination Sock";
             }
 
             pane.setStyle("-fx-background-color:" + colors[0] + ";"
@@ -602,19 +587,19 @@ public class GameWindow {
 
             VBox content = new VBox(1);
             content.setAlignment(Pos.TOP_CENTER);
-            content.setPadding(new Insets(6, 0, 0, 0));
+            content.setPadding(new Insets(4, 0, 0, 0)); 
 
-            ImageView iv = loadIcon(cellIconFile(ec, idx), 32);
+            ImageView iv = loadIcon(cellIconFile(ec, idx), 50);
             if (iv != null) content.getChildren().add(iv);
             else if (!icon.isEmpty()) {
                 Label iconLbl = new Label(icon);
-                iconLbl.setFont(Font.font(14));
+                iconLbl.setFont(Font.font("Arial", FontWeight.BOLD, 18));
                 content.getChildren().add(iconLbl);
             }
 
             if (!info.isEmpty()) {
                 Label infoLbl = new Label(info);
-                infoLbl.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 9));
+                infoLbl.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 15));
                 infoLbl.setTextFill(Color.web(GOLD));
                 infoLbl.setEffect(new DropShadow(3, Color.BLACK));
                 content.getChildren().add(infoLbl);
@@ -631,10 +616,10 @@ public class GameWindow {
                 tokens.setPadding(new Insets(0, 0, 4, 0));
 
                 if (hasPlayer) {
-                    tokens.getChildren().add(buildDynamicAvatar(player, PURPLE, 26));
+                    tokens.getChildren().add(buildDynamicAvatar(player, PURPLE, 36));
                 }
                 if (hasOpp) {
-                    tokens.getChildren().add(buildDynamicAvatar(opponent, GREEN_DIM, 26));
+                    tokens.getChildren().add(buildDynamicAvatar(opponent, GREEN_DIM, 36));
                 }
                 pane.getChildren().add(tokens);
                 StackPane.setAlignment(tokens, Pos.BOTTOM_CENTER);
@@ -657,9 +642,9 @@ public class GameWindow {
         return "";
     }
 
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
-    // STAT PANEL REFRESH (SYNCED TO HUMAN VS HUMAN LOGIC)
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
+    // STAT PANEL REFRESH 
+    // ======================================================================
     private void refreshStats() {
         Monster p = game.getPlayer();
         Monster o = game.getOpponent();
@@ -672,7 +657,7 @@ public class GameWindow {
 
         tagPlayerRole.setText("Role: " + p.getRole());
         setTagVisible(tagPlayerShield,    p.isShielded());
-        setTagVisible(tagPlayerConfusion, p.isConfused(), "ðŸ˜µ Confused (" + p.getConfusionTurns() + ")");
+        setTagVisible(tagPlayerConfusion, p.isConfused(), "[Confused] (" + p.getConfusionTurns() + ")");
         setTagVisible(tagPlayerFreeze, p.isFrozen());
 
         lblOppName.setText(o.getName());
@@ -682,12 +667,11 @@ public class GameWindow {
 
         tagOppRole.setText("Role: " + o.getRole());
         setTagVisible(tagOppShield,    o.isShielded());
-        setTagVisible(tagOppConfusion, o.isConfused(), "ðŸ˜µ Confused (" + o.getConfusionTurns() + ")");
+        setTagVisible(tagOppConfusion, o.isConfused(), "[Confused] (" + o.getConfusionTurns() + ")");
         setTagVisible(tagOppFreeze, o.isFrozen());
 
-        lblPileCount.setText("ðŸ“š Pile: " + getDeckSize() + " cards");
+        lblPileCount.setText("Deck: " + getDeckSize() + " cards");
 
-        // UI Turn Badge & Highlight Updates
         if (isPlayer1Turn) {
             glowCard(playerCard, true);
             glowCard(oppCard, false);
@@ -698,16 +682,14 @@ public class GameWindow {
             styleTurnBadge(lblTurnBadge, o.getName().toUpperCase() + "'S TURN", false);
         }
 
-        // PERFECTLY SYNCED POWERUP BUTTON STATES
         boolean p1CanPowerup = p.getEnergy() >= Constants.POWERUP_COST;
         btnPlayerPowerup.setDisable(!isPlayer1Turn || !p1CanPowerup);
-        btnPlayerPowerup.setText(p1CanPowerup ? "âš¡ USE POWERUP (500 âš¡)" : "âš¡ POWERUP (LOCKED)");
+        btnPlayerPowerup.setText(p1CanPowerup ? "USE POWERUP (500 E)" : "POWERUP (LOCKED)");
 
         boolean p2CanPowerup = o.getEnergy() >= Constants.POWERUP_COST;
         btnOppPowerup.setDisable(isPlayer1Turn || !p2CanPowerup);
-        btnOppPowerup.setText(p2CanPowerup ? "âš¡ USE POWERUP (500 âš¡)" : "âš¡ POWERUP (LOCKED)");
+        btnOppPowerup.setText(p2CanPowerup ? "USE POWERUP (500 E)" : "POWERUP (LOCKED)");
 
-        // Allow rolls and cheats for whichever human is currently playing
         btnRoll.setDisable(false);
         btnCheatGate.setDisable(false);
         btnCheatEnergy.setDisable(false);
@@ -738,7 +720,7 @@ public class GameWindow {
 
     private void spawnFloat(StackPane parent, String text, Color color) {
         Label lbl = new Label(text);
-        lbl.setFont(Font.font("Impact", FontWeight.BOLD, 20));
+        lbl.setFont(Font.font("Impact", FontWeight.BOLD, 32));
         lbl.setTextFill(color);
         lbl.setEffect(new DropShadow(5, Color.BLACK));
         StackPane.setAlignment(lbl, Pos.CENTER);
@@ -765,9 +747,9 @@ public class GameWindow {
         shake.play();
     }
 
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
     // STRICT ENGINE TURN EXECUTION
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
     private void performAnimatedRoll() {
         btnRoll.setDisable(true);
         btnPlayerPowerup.setDisable(true);
@@ -798,11 +780,9 @@ public class GameWindow {
 
     private void executeMove(int roll) {
         Monster current = game.getCurrent();
-        Monster other   = (current == game.getPlayer()) ? game.getOpponent() : game.getPlayer();
 
         log(current.getName(), "rolled a " + roll + "!", "neutral");
         
-        // â”€â”€ 1. ENGINE SYNCHRONIZATION: Peek at the exact card on top of the pile â”€â”€
         Card expectedCard = null;
         int deckSizeBefore = 0;
         try {
@@ -816,26 +796,20 @@ public class GameWindow {
         } catch (Exception ignored) {}
 
         try {
-            // â”€â”€ 2. ENGINE IN TOTAL CONTROL â”€â”€
-            // Pass the same roll the player saw so movement always matches the dice display.
             game.playTurn(roll);
             
-            // â”€â”€ 3. POST-MOVEMENT CARD CELL DRAW CHECK â”€â”€
             int deckSizeAfter = Board.getCards() != null ? Board.getCards().size() : 0;
             if (deckSizeAfter < deckSizeBefore && expectedCard != null) {
                 playSound("whoosh.wav"); 
-                notifyCardDrawn("ðŸƒ�", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
+                notifyCardDrawn("[CARD]", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
             }
             
         } catch (InvalidMoveException ex) {
-            // If the engine throws an InvalidMoveException (such as landing on a blocked cell on turn 1)
-            // the catch block accurately retains the token position and allows the next move.
             showError("Move Blocked", current.getName() + " had its move reverted or blocked by an obstacle! Roll again.");
         } catch (Exception ex) {
             showError("Error", ex.getMessage());
         }
 
-        // Synchronize and re-render the matrix layout exactly to match the engine's state variables
         refreshAll();
         checkWin();
     }
@@ -848,7 +822,7 @@ public class GameWindow {
             log(current.getName(), "activated their powerup!", "good");
             refreshAll();
         } catch (OutOfEnergyException ex) {
-            showError("Powerup Failed", "Need at least 500 âš¡ to activate.");
+            showError("Powerup Failed", "Need at least 500 E to activate.");
         }
     }
 
@@ -880,9 +854,9 @@ public class GameWindow {
         showWinScreen(winner, playerWon);
     }
 
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
     // POPUPS
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
     private void showWinScreen(Monster winner, boolean playerWon) {
         Stage pop = new Stage();
         pop.initOwner(stage);
@@ -897,27 +871,28 @@ public class GameWindow {
                       + "-fx-border-radius:16;-fx-background-radius:16;"
                       + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),30,0.3,0,10);");
 
-        Label trophy = new Label(playerWon ? "ðŸ�†" : "ðŸ’€");
-        trophy.setFont(Font.font(54));
+        Label trophy = new Label(playerWon ? "WINNER" : "GAME OVER");
+        trophy.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 28));
+        trophy.setTextFill(Color.web(playerWon ? GOLD : RED));
 
         Label header = new Label(playerWon ? "VICTORY!" : "DEFEAT");
-        header.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 30));
+        header.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 40));
         header.setTextFill(Color.web(playerWon ? GOLD : RED));
         header.setEffect(new DropShadow(10, Color.web(playerWon ? GOLD : RED, 0.6)));
 
         Label detail = new Label(winner.getName() + " claimed Boo's Door!\n"
-                + "Final Energy: " + winner.getEnergy() + " âš¡");
-        detail.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+                + "Final Energy: " + winner.getEnergy() + " E");
+        detail.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         detail.setTextFill(Color.web(TEXT_LIGHT));
         detail.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
         detail.setWrapText(true);
 
         Monster p = game.getPlayer(); Monster o = game.getOpponent();
-        Label scores = new Label(p.getName() + ": " + p.getEnergy() + " âš¡    |    " + o.getName() + ": " + o.getEnergy() + " âš¡");
-        scores.setFont(Font.font("Arial", 13));
+        Label scores = new Label(p.getName() + ": " + p.getEnergy() + " E    |    " + o.getName() + ": " + o.getEnergy() + " E");
+        scores.setFont(Font.font("Arial", 18));
         scores.setTextFill(Color.web(MUTED));
 
-        Button btnBack = actionButton("â†©  RETURN TO MENU", GOLD, "#1a0a00");
+        Button btnBack = actionButton("<-  RETURN TO MENU", GOLD, "#1a0a00");
         btnBack.setPrefWidth(240);
         
         btnBack.setOnAction(e -> {
@@ -953,15 +928,15 @@ public class GameWindow {
                       + "-fx-border-radius:14;-fx-background-radius:14;"
                       + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
 
-        Label head = new Label("âš   " + title.toUpperCase());
-        head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
+        Label head = new Label("WARNING: " + title.toUpperCase());
+        head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 24));
         head.setTextFill(Color.web(RED));
         head.setEffect(new DropShadow(8, Color.web(RED, 0.5)));
 
         Label body = new Label(msg);
-        body.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        body.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         body.setTextFill(Color.web(TEXT_LIGHT));
-        body.setWrapText(true); body.setMaxWidth(320);
+        body.setWrapText(true); body.setMaxWidth(400);
         body.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
         Button ok = actionButton("CONTINUE", GOLD, "#1a0a00");
@@ -996,14 +971,14 @@ public class GameWindow {
                       + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
 
         Label head = new Label("ABANDON GAME?");
-        head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
+        head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 26));
         head.setTextFill(Color.web(RED));
         head.setEffect(new DropShadow(8, Color.web(RED, 0.5)));
 
         Label body = new Label("Are you certain you wish to leave?\nAll progress will be permanently lost.");
-        body.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        body.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         body.setTextFill(Color.web(TEXT_LIGHT));
-        body.setWrapText(true); body.setMaxWidth(320);
+        body.setWrapText(true); body.setMaxWidth(400);
         body.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
         Button btnCancel = actionButton("CANCEL", "#374151", "#ffffff");
@@ -1042,7 +1017,7 @@ public class GameWindow {
         lblCardIcon.setText(icon);
         lblLastCardName.setText(cardName);
         lblLastCardEffect.setText(effect);
-        lblPileCount.setText("ðŸ“š Pile: " + remainingPile + " cards");
+        lblPileCount.setText("Deck: " + remainingPile + " cards");
         log(game.getCurrent().getName(), "drew a card: " + cardName, "neutral");
         
         ScaleTransition st = new ScaleTransition(Duration.millis(300), cardVisualBox);
@@ -1051,9 +1026,9 @@ public class GameWindow {
         st.play();
     }
 
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
-    // WIDGET FACTORIES (WITH SAFE HOVER HANDLING)
-    // â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�â•�
+    // ======================================================================
+    // WIDGET FACTORIES 
+    // ======================================================================
     private VBox monsterCard() {
         VBox box = new VBox(8);
         box.setPadding(new Insets(16));
@@ -1070,7 +1045,7 @@ public class GameWindow {
                    + "-fx-border-color:#7c3aed33;-fx-border-width:1.5;"
                    + "-fx-border-radius:14;-fx-background-radius:14;");
         Label h = new Label(title);
-        h.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 10));
+        h.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 14));
         h.setTextFill(Color.web(PURPLE));
         h.setStyle("-fx-letter-spacing:1.5px;");
         box.getChildren().add(h);
@@ -1079,7 +1054,7 @@ public class GameWindow {
 
     private Label makeTag(String text, String fg, String bg, String border) {
         Label l = new Label(text);
-        l.setFont(Font.font("Arial", FontWeight.BOLD, 9));
+        l.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         l.setTextFill(Color.web(fg));
         l.setStyle("-fx-background-color:" + bg + ";"
                  + "-fx-border-color:" + border + ";"
@@ -1112,10 +1087,9 @@ public class GameWindow {
         return pb;
     }
 
-    // Updated to safely handle hover logic without glitching disabled states
     private Button actionButton(String text, String bg, String fg) {
         Button btn = new Button(text);
-        btn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        btn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         btn.setMaxWidth(Double.MAX_VALUE);
         String base = "-fx-background-color:" + bg + ";-fx-text-fill:" + fg + ";"
                     + "-fx-padding:9 14;-fx-background-radius:10;-fx-border-radius:10;-fx-cursor:hand;";
@@ -1140,7 +1114,7 @@ public class GameWindow {
 
     private Button smallBtn(String text, String bg, String fg) {
         Button b = new Button(text);
-        b.setFont(Font.font("Arial", FontWeight.BOLD, 10));
+        b.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         b.setStyle("-fx-background-color:" + bg + ";-fx-text-fill:" + fg + ";"
                  + "-fx-padding:5 10;-fx-background-radius:8;-fx-border-radius:8;-fx-cursor:hand;");
         return b;
@@ -1155,14 +1129,14 @@ public class GameWindow {
         dot.setPrefSize(10, 10); dot.setMaxSize(10, 10);
         Label ico = new Label(icon);
         Label txt = new Label(label);
-        txt.setFont(Font.font("Arial", 10)); txt.setTextFill(Color.web(MUTED));
+        txt.setFont(Font.font("Arial", 14)); txt.setTextFill(Color.web(MUTED));
         row.getChildren().addAll(dot, ico, txt);
         return row;
     }
 
     private Label panelLabel(String text) {
         Label l = new Label(text);
-        l.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 11));
+        l.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 16));
         l.setTextFill(Color.web(PURPLE));
         l.setStyle("-fx-letter-spacing:2px;");
         return l;
@@ -1192,7 +1166,7 @@ public class GameWindow {
 
     private Tooltip styledTooltip(String text) {
         Tooltip t = new Tooltip(text);
-        t.setFont(Font.font("Arial", 11));
+        t.setFont(Font.font("Arial", 15));
         return t;
     }
 
@@ -1230,7 +1204,7 @@ public class GameWindow {
         btn.setStyle(def);
         btn.setOnMouseEntered(e -> { btn.setStyle(hov); });
         btn.setOnMouseExited(e  -> btn.setStyle(def));
-        ImageView ic = loadIcon("exit.png", 16);
+        ImageView ic = loadIcon("exit.png", 20); 
         if (ic != null) btn.setGraphic(ic);
         
         btn.setOnAction(e -> handleExitPrompt());
@@ -1243,12 +1217,11 @@ public class GameWindow {
         ft.play(); tt.play();
     }
 
- // Updated log method with Player Name instead of Timestamp
     private void log(String playerName, String action, String type) {
         String fullMsg = playerName.toUpperCase() + " " + action;
         
-        Label l = new Label("▶ " + fullMsg);
-        l.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        Label l = new Label("> " + fullMsg);
+        l.setFont(Font.font("Arial", FontWeight.BOLD, 15));
         l.setWrapText(true);
         
         switch (type) {
@@ -1260,18 +1233,15 @@ public class GameWindow {
         logBox.getChildren().add(0, l);
         if (logBox.getChildren().size() > 60) logBox.getChildren().remove(60);
 
-        // Trigger our new creative pop-up!
         showToast(fullMsg, type);
     }
 
-    // The new floating animation method
     private void showToast(String message, String type) {
         Label toast = new Label(message);
-        toast.setFont(Font.font("Arial Black", FontWeight.BOLD, 14));
+        toast.setFont(Font.font("Arial Black", FontWeight.BOLD, 18));
         toast.setTextFill(Color.WHITE);
         toast.setPadding(new Insets(12, 25, 12, 25));
 
-        // Color the popup background based on the action type
         String bgColor = type.equals("good") ? "#10b981ee" : 
                          type.equals("bad") ? "#ef4444ee" : "#7c3aedee";
 
@@ -1280,34 +1250,28 @@ public class GameWindow {
                      + "-fx-border-color: #ffffff55; -fx-border-width: 2;"
                      + "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 15, 0.2, 0, 5);");
 
-        // Align it to drop down from the top center
         StackPane.setAlignment(toast, Pos.TOP_CENTER);
         StackPane.setMargin(toast, new Insets(50, 0, 0, 0));
 
-        // Ensure it doesn't block mouse clicks while hovering
         toast.setMouseTransparent(true); 
         rootOverlay.getChildren().add(toast);
 
-        // --- THE ANIMATION ---
         toast.setTranslateY(-50);
         toast.setOpacity(0);
 
-        // 1. Slide down and fade in
         TranslateTransition ttIn = new TranslateTransition(Duration.millis(300), toast);
         ttIn.setToY(0);
         FadeTransition ftIn = new FadeTransition(Duration.millis(300), toast);
         ftIn.setToValue(1.0);
 
-        // 2. Wait 1 second, then slide up and fade out
         TranslateTransition ttOut = new TranslateTransition(Duration.millis(300), toast);
         ttOut.setToY(-50);
-        ttOut.setDelay(Duration.millis(2000)); // Exactly 1 second delay
+        ttOut.setDelay(Duration.millis(2000)); 
         
         FadeTransition ftOut = new FadeTransition(Duration.millis(300), toast);
         ftOut.setToValue(0.0);
         ftOut.setDelay(Duration.millis(2000));
 
-        // 3. Delete it from the screen when done to save memory
         ftOut.setOnFinished(e -> rootOverlay.getChildren().remove(toast));
 
         ttIn.play(); ftIn.play();
