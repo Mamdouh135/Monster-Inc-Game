@@ -36,6 +36,7 @@ import javafx.util.Duration;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.input.KeyCode;
 
 import java.io.File;
 
@@ -268,6 +269,17 @@ public class GameWindow {
         rootOverlay = new StackPane(root, animationLayer);
         
         Scene scene = new Scene(rootOverlay, 1380, 870);
+        
+        // --- ADDED KEY LISTENER FOR W AND E ---
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.W) {
+                handleCheatGate();
+            } else if (e.getCode() == KeyCode.E) {
+                handleCheatEnergy();
+            }
+        });
+        // --------------------------------------
+
         stage.setMinWidth(1100); stage.setMinHeight(720);
         stage.setScene(scene);
         stage.setFullScreen(true);
@@ -345,8 +357,7 @@ public class GameWindow {
         div.setStyle("-fx-background-color:#7c3aed22;");
 
         btnCheatGate   = smallBtn("TELEPORT",   "#2d2860", "#c4b5fd");
-        btnCheatEnergy = smallBtn("+50 ENERGY", "#2d2860", "#c4b5fd");
-        btnCheatGate.setOnAction(e -> handleCheatGate());
+        btnCheatEnergy = smallBtn("+500 ENERGY", "#2d2860", "#c4b5fd");        btnCheatGate.setOnAction(e -> handleCheatGate());
         btnCheatEnergy.setOnAction(e -> handleCheatEnergy());
         HBox cheats = new HBox(8, btnCheatGate, btnCheatEnergy);
         cheats.setAlignment(Pos.CENTER);
