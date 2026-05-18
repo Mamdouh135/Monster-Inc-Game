@@ -45,6 +45,8 @@ import game.engine.Game;
 import game.engine.Role;
 import game.engine.cards.Card;
 import game.engine.monsters.Monster;
+import game.engine.monsters.Dasher;
+import game.engine.monsters.MultiTasker;
 import game.engine.cells.*;
 import game.engine.exceptions.InvalidMoveException;
 import game.engine.exceptions.OutOfEnergyException;
@@ -694,16 +696,18 @@ public class GameWindow {
         setTagVisible(tagPlayerConfusion, p.isConfused(), "[Confused] (" + p.getConfusionTurns() + ")");
         setTagVisible(tagPlayerFreeze, p.isFrozen());
         
-        /* TODO: Uncomment these lines and use your exact Engine method names to display Momentum/Focus
-         * if (p.getClass().getSimpleName().equals("Dasher")) {
-         * setTagVisible(tagPlayerMomentum, ((game.engine.monsters.Dasher)p).isMomentumActive()); 
-         * }
-         * if (p.getClass().getSimpleName().equals("Dynamo")) {
-         * setTagVisible(tagPlayerFocus, ((game.engine.monsters.Dynamo)p).isFocusActive()); 
-         * }
-         */
-         setTagVisible(tagPlayerMomentum, false); 
-         setTagVisible(tagPlayerFocus, false);
+        // Correctly assign Momentum for Dasher and Focus for MultiTasker for Player
+        if (p.getClass().getSimpleName().equals("Dasher")) {
+            setTagVisible(tagPlayerMomentum, ((Dasher) p).getMomentumTurns() > 0); 
+        } else {
+            setTagVisible(tagPlayerMomentum, false);
+        }
+        
+        if (p.getClass().getSimpleName().equals("MultiTasker")) {
+            setTagVisible(tagPlayerFocus, ((MultiTasker) p).getNormalSpeedTurns() > 0); 
+        } else {
+            setTagVisible(tagPlayerFocus, false);
+        }
 
         lblOppName.setText(o.getName());
         lblOppType.setText(o.getClass().getSimpleName());
@@ -723,16 +727,18 @@ public class GameWindow {
         setTagVisible(tagOppConfusion, o.isConfused(), "[Confused] (" + o.getConfusionTurns() + ")");
         setTagVisible(tagOppFreeze, o.isFrozen());
         
-        /* TODO: Uncomment these lines and use your exact Engine method names to display Momentum/Focus
-         * if (o.getClass().getSimpleName().equals("Dasher")) {
-         * setTagVisible(tagOppMomentum, ((game.engine.monsters.Dasher)o).isMomentumActive()); 
-         * }
-         * if (o.getClass().getSimpleName().equals("Dynamo")) {
-         * setTagVisible(tagOppFocus, ((game.engine.monsters.Dynamo)o).isFocusActive()); 
-         * }
-         */
-         setTagVisible(tagOppMomentum, false); 
-         setTagVisible(tagOppFocus, false);
+        // Correctly assign Momentum for Dasher and Focus for MultiTasker for Opponent
+        if (o.getClass().getSimpleName().equals("Dasher")) {
+            setTagVisible(tagOppMomentum, ((Dasher) o).getMomentumTurns() > 0); 
+        } else {
+            setTagVisible(tagOppMomentum, false);
+        }
+        
+        if (o.getClass().getSimpleName().equals("MultiTasker")) {
+            setTagVisible(tagOppFocus, ((MultiTasker) o).getNormalSpeedTurns() > 0); 
+        } else {
+            setTagVisible(tagOppFocus, false);
+        }
 
         lblPileCount.setText("Deck: " + getDeckSize() + " cards");
 
@@ -900,6 +906,7 @@ public class GameWindow {
     private void executeMove(int roll) {
         Monster current = game.getCurrent();
         int oldPos = current.getPosition();
+        boolean hadShield = current.isShielded(); // TRACK SHIELD STATE BEFORE MOVE
 
         log(current.getName(), "rolled a " + roll + "!", "neutral");
         
@@ -920,9 +927,16 @@ public class GameWindow {
             int newPos = current.getPosition();
             
             int deckSizeAfter = Board.getCards() != null ? Board.getCards().size() : 0;
-            if (deckSizeAfter < deckSizeBefore && expectedCard != null) {
+            // CORRECTED: Deck size logic now correctly detects card draw even if deck reshuffles
+            if ((deckSizeAfter < deckSizeBefore || deckSizeAfter > deckSizeBefore + 20) && expectedCard != null) {
                 playSound("whoosh.wav"); 
                 notifyCardDrawn("[CARD]", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
+            }
+
+            // CORRECTED: Verify if shield was consumed to block a hit and display visual feedback
+            if (hadShield && !current.isShielded()) {
+                log(current.getName(), "blocked an effect with their Shield!", "good");
+                spawnFloat(cellPanes[newPos], "BLOCKED!", Color.web(CYAN));
             }
             
             if (oldPos != newPos) {
