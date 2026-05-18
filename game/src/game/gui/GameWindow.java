@@ -11,6 +11,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
@@ -160,6 +161,7 @@ public class GameWindow {
             if (file.exists()) {
                 Media media = new Media(file.toURI().toString());
                 MediaPlayer mp = new MediaPlayer(media);
+                mp.setVolume(SoundManager.volume);
                 mp.setOnEndOfMedia(mp::dispose);
                 mp.play();
             }
@@ -545,8 +547,17 @@ public class GameWindow {
         cardInfoCard.getChildren().addAll(cardVisualBox, pileRow);
 
         Button btnHelp = actionButton("HOW TO PLAY", "#2d2860", "#ffffff");
-        VBox.setMargin(btnHelp, new Insets(12, 0, 0, 0));
         btnHelp.setOnAction(e -> showInstructions());
+        btnHelp.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(btnHelp, Priority.ALWAYS);
+
+        Button btnSettings = actionButton("SETTINGS", "#2d2860", "#ffffff");
+        btnSettings.setOnAction(e -> showSettings());
+        btnSettings.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(btnSettings, Priority.ALWAYS);
+
+        HBox settingsRow = new HBox(8, btnHelp, btnSettings);
+        VBox.setMargin(settingsRow, new Insets(12, 0, 0, 0));
 
         Button btnExit = new Button("ABANDON GAME");
         btnExit.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 16));
@@ -554,7 +565,7 @@ public class GameWindow {
         VBox.setMargin(btnExit, new Insets(6, 0, 0, 0));
         styleExitButton(btnExit);
 
-        panel.getChildren().addAll(oppCard, legendCard, cardInfoCard, btnHelp, btnExit);
+        panel.getChildren().addAll(oppCard, legendCard, cardInfoCard, settingsRow, btnExit);
         return panel;
     }
 
@@ -1128,6 +1139,60 @@ public class GameWindow {
     // POPUPS
     // ======================================================================
     
+    private void showSettings() {
+        VBox layout = new VBox(20);
+        layout.setAlignment(Pos.TOP_CENTER);
+        layout.setPadding(new Insets(30, 40, 30, 40));
+        layout.setMaxWidth(400); layout.setMaxHeight(300);
+        layout.setStyle("-fx-background-color:linear-gradient(to bottom right,#1a0a2e,#0a0a0f);"
+                      + "-fx-border-color:" + CYAN + ";-fx-border-width:2;"
+                      + "-fx-border-radius:14;-fx-background-radius:14;"
+                      + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
+
+        Label head = new Label("⚙ SOUND SETTINGS");
+        head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
+        head.setTextFill(Color.web(CYAN));
+        head.setEffect(new DropShadow(8, Color.web(CYAN, 0.5)));
+
+        Label volLabel = new Label("Volume: " + (int)(SoundManager.volume * 100) + "%");
+        volLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        volLabel.setTextFill(Color.web(TEXT_LIGHT));
+
+        Slider volSlider = new Slider(0, 100, SoundManager.volume * 100);
+        volSlider.setShowTickMarks(true);
+        volSlider.setShowTickLabels(true);
+        volSlider.setMajorTickUnit(25);
+        volSlider.setBlockIncrement(5);
+        volSlider.setPrefWidth(250);
+        
+        volSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            SoundManager.volume = newVal.doubleValue() / 100.0;
+            volLabel.setText("Volume: " + newVal.intValue() + "%");
+        });
+
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 20;");
+
+        Button ok = new Button("DONE");
+        ok.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        ok.setStyle("-fx-background-color:" + CYAN + "; -fx-text-fill:#0a0a1a; -fx-padding:10 30; -fx-background-radius:8; -fx-cursor:hand;");
+        ok.setPrefWidth(180);
+        ok.setOnAction(e -> {
+            FadeTransition ft = new FadeTransition(Duration.millis(180), layout);
+            ft.setToValue(0); ft.setOnFinished(ev -> rootOverlay.getChildren().remove(overlay)); ft.play();
+        });
+
+        layout.getChildren().addAll(head, volLabel, volSlider, ok);
+        overlay.getChildren().add(layout);
+        
+        layout.setOpacity(0); layout.setTranslateY(24);
+        rootOverlay.getChildren().add(overlay);
+        
+        FadeTransition ft = new FadeTransition(Duration.millis(260), layout); ft.setToValue(1);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(260), layout); tt.setToY(0);
+        ft.play(); tt.play();
+    }
+
     private void showInstructions() {
         playSound("hover.mp3");
         Stage pop = new Stage();

@@ -12,6 +12,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -114,7 +115,16 @@ public class Main extends Application {
         btnRules.setOnMouseExited(e -> btnRules.setStyle(rulesDef));
         btnRules.setOnAction(e -> showInstructions());
 
-        bottomBox.getChildren().add(btnRules);
+        Button btnSettings = new Button("⚙ SETTINGS");
+        btnSettings.setStyle(rulesDef);
+        btnSettings.setOnMouseEntered(e -> { btnSettings.setStyle(rulesHov); });
+        btnSettings.setOnMouseExited(e -> btnSettings.setStyle(rulesDef));
+        btnSettings.setOnAction(e -> showSettings());
+
+        HBox bottomButtons = new HBox(20, btnRules, btnSettings);
+        bottomButtons.setAlignment(Pos.CENTER);
+        
+        bottomBox.getChildren().add(bottomButtons);
         mainContent.setBottom(bottomBox);
 
         rootNode.getChildren().add(mainContent);
@@ -364,6 +374,60 @@ public class Main extends Application {
         pop.setScene(sc); pop.showAndWait();
     }
 
+    private void showSettings() {
+        VBox layout = new VBox(20);
+        layout.setAlignment(Pos.TOP_CENTER);
+        layout.setPadding(new Insets(30, 40, 30, 40));
+        layout.setMaxWidth(400); layout.setMaxHeight(300);
+        layout.setStyle("-fx-background-color:linear-gradient(to bottom right,#1a0a2e,#0a0a0f);"
+                      + "-fx-border-color:" + CYAN + ";-fx-border-width:2;"
+                      + "-fx-border-radius:14;-fx-background-radius:14;"
+                      + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
+
+        Label head = new Label("⚙ SOUND SETTINGS");
+        head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
+        head.setTextFill(Color.web(CYAN));
+        head.setEffect(new DropShadow(8, Color.web(CYAN, 0.5)));
+
+        Label volLabel = new Label("Volume: " + (int)(SoundManager.volume * 100) + "%");
+        volLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        volLabel.setTextFill(Color.web(TEXT_LIGHT));
+
+        Slider volSlider = new Slider(0, 100, SoundManager.volume * 100);
+        volSlider.setShowTickMarks(true);
+        volSlider.setShowTickLabels(true);
+        volSlider.setMajorTickUnit(25);
+        volSlider.setBlockIncrement(5);
+        volSlider.setPrefWidth(250);
+        
+        volSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            SoundManager.volume = newVal.doubleValue() / 100.0;
+            volLabel.setText("Volume: " + newVal.intValue() + "%");
+        });
+
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 20;");
+
+        Button ok = new Button("DONE");
+        ok.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        ok.setStyle("-fx-background-color:" + CYAN + "; -fx-text-fill:#0a0a1a; -fx-padding:10 30; -fx-background-radius:8; -fx-cursor:hand;");
+        ok.setPrefWidth(180);
+        ok.setOnAction(e -> {
+            FadeTransition ft = new FadeTransition(Duration.millis(180), layout);
+            ft.setToValue(0); ft.setOnFinished(ev -> rootNode.getChildren().remove(overlay)); ft.play();
+        });
+
+        layout.getChildren().addAll(head, volLabel, volSlider, ok);
+        overlay.getChildren().add(layout);
+        
+        layout.setOpacity(0); layout.setTranslateY(24);
+        rootNode.getChildren().add(overlay);
+        
+        FadeTransition ft = new FadeTransition(Duration.millis(260), layout); ft.setToValue(1);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(260), layout); tt.setToY(0);
+        ft.play(); tt.play();
+    }
+
     private void playSound(String filename) {
         // AudioClip does not support MP3; use MediaPlayer.
         // Auto-convert .wav references to .mp3 (all assets are MP3).
@@ -376,6 +440,7 @@ public class Main extends Application {
             if (file.exists()) {
                 Media media = new Media(file.toURI().toString());
                 MediaPlayer mp = new MediaPlayer(media);
+                mp.setVolume(SoundManager.volume);
                 mp.setOnEndOfMedia(mp::dispose);
                 mp.play();
             }
