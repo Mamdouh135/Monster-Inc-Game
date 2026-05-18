@@ -27,6 +27,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Ellipse;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
@@ -97,11 +98,13 @@ public class GameWindow {
     private VBox playerCard, oppCard;
     private Label lblPlayerName, lblPlayerType, lblPlayerEnergy;
     private Label tagPlayerRole, tagPlayerShield, tagPlayerConfusion, tagPlayerFreeze;
+    private Label tagPlayerMomentum, tagPlayerFocus; 
     private ProgressBar barPlayerEnergy;
     private Button btnPlayerPowerup;
     
     private Label lblOppName, lblOppType, lblOppEnergy;
     private Label tagOppRole, tagOppShield, tagOppConfusion, tagOppFreeze;
+    private Label tagOppMomentum, tagOppFocus; 
     private ProgressBar barOppEnergy;
     private Button btnOppPowerup;
 
@@ -111,6 +114,10 @@ public class GameWindow {
     private Label lblCardIcon, lblLastCardName, lblLastCardEffect, lblPileCount;
 
     private int lastPlayerEnergy = -1, lastOppEnergy = -1;
+    
+    // ANIMATION VARIABLES
+    private javafx.scene.layout.Pane animationLayer;
+    private boolean isAnimating = false;
 
     // ======================================================================
     // CONSTRUCTOR
@@ -252,7 +259,11 @@ public class GameWindow {
         root.setFitToWidth(true); root.setFitToHeight(true);
         root.setStyle("-fx-background:" + BG_APP + "; -fx-border-color:" + BG_APP + ";");
 
-        rootOverlay = new StackPane(root);
+        // Set up the animation layer
+        animationLayer = new javafx.scene.layout.Pane();
+        animationLayer.setPickOnBounds(false);
+
+        rootOverlay = new StackPane(root, animationLayer);
         
         Scene scene = new Scene(rootOverlay, 1380, 870);
         stage.setMinWidth(1100); stage.setMinHeight(720);
@@ -315,7 +326,12 @@ public class GameWindow {
         tagPlayerConfusion = makeTag("[Confused]",AMBER_TEXT,  "#d9770622", "#d9770666");
         tagPlayerFreeze    = makeTag("[Frozen]",  BLUE_TEXT,   "#0e749022", "#0e749066");
         
-        FlowTags pTags = new FlowTags(tagPlayerRole, tagPlayerShield, tagPlayerConfusion, tagPlayerFreeze);
+        tagPlayerMomentum  = makeTag("[Momentum]", ORANGE, "#d9770622", "#d9770666");
+        tagPlayerFocus     = makeTag("[Focus]", PURPLE, "#7c3aed22", "#7c3aed66");
+        tagPlayerMomentum.setVisible(false); tagPlayerMomentum.setManaged(false);
+        tagPlayerFocus.setVisible(false); tagPlayerFocus.setManaged(false);
+        
+        FlowTags pTags = new FlowTags(tagPlayerRole, tagPlayerShield, tagPlayerConfusion, tagPlayerFreeze, tagPlayerMomentum, tagPlayerFocus);
 
         lblPlayerEnergy = labelOf("", 16, GOLD, true);
         barPlayerEnergy = energyBar(PURPLE);
@@ -447,7 +463,12 @@ public class GameWindow {
         tagOppConfusion = makeTag("[Confused]",AMBER_TEXT,  "#d9770622", "#d9770666");
         tagOppFreeze    = makeTag("[Frozen]",  BLUE_TEXT,   "#0e749022", "#0e749066");
         
-        FlowTags oTags = new FlowTags(tagOppRole, tagOppShield, tagOppConfusion, tagOppFreeze);
+        tagOppMomentum  = makeTag("[Momentum]", ORANGE, "#d9770622", "#d9770666");
+        tagOppFocus     = makeTag("[Focus]", PURPLE, "#7c3aed22", "#7c3aed66");
+        tagOppMomentum.setVisible(false); tagOppMomentum.setManaged(false);
+        tagOppFocus.setVisible(false); tagOppFocus.setManaged(false);
+        
+        FlowTags oTags = new FlowTags(tagOppRole, tagOppShield, tagOppConfusion, tagOppFreeze, tagOppMomentum, tagOppFocus);
 
         lblOppEnergy = labelOf("", 16, GOLD, true);
         barOppEnergy = energyBar(GREEN_DIM);
@@ -510,13 +531,17 @@ public class GameWindow {
 
         cardInfoCard.getChildren().addAll(cardVisualBox, pileRow);
 
+        Button btnHelp = actionButton("HOW TO PLAY", "#2d2860", "#ffffff");
+        VBox.setMargin(btnHelp, new Insets(12, 0, 0, 0));
+        btnHelp.setOnAction(e -> showInstructions());
+
         Button btnExit = new Button("ABANDON GAME");
         btnExit.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 16));
         btnExit.setMaxWidth(Double.MAX_VALUE);
-        VBox.setMargin(btnExit, new Insets(12, 0, 0, 0));
+        VBox.setMargin(btnExit, new Insets(6, 0, 0, 0));
         styleExitButton(btnExit);
 
-        panel.getChildren().addAll(oppCard, legendCard, cardInfoCard, btnExit);
+        panel.getChildren().addAll(oppCard, legendCard, cardInfoCard, btnHelp, btnExit);
         return panel;
     }
 
@@ -608,8 +633,9 @@ public class GameWindow {
             pane.getChildren().add(content);
             StackPane.setAlignment(content, Pos.TOP_CENTER);
 
-            boolean hasPlayer = (idx == player.getPosition());
-            boolean hasOpp    = (idx == opponent.getPosition());
+            boolean hasPlayer = (idx == player.getPosition()) && !isAnimating;
+            boolean hasOpp    = (idx == opponent.getPosition()) && !isAnimating;
+            
             if (hasPlayer || hasOpp) {
                 HBox tokens = new HBox(4);
                 tokens.setAlignment(Pos.BOTTOM_CENTER);
@@ -655,20 +681,58 @@ public class GameWindow {
         lblPlayerEnergy.setText("Energy:  " + p.getEnergy() + "  /  1000");
         barPlayerEnergy.setProgress(Math.min(1.0, p.getEnergy() / 1000.0));
 
-        tagPlayerRole.setText("Role: " + p.getRole());
+        if (p.isConfused()) {
+            Role originalP = (p.getRole() == Role.SCARER) ? Role.LAUGHER : Role.SCARER;
+            tagPlayerRole.setText("Role: " + originalP + " (Now " + p.getRole() + ")");
+            tagPlayerRole.setTextFill(Color.web(ORANGE));
+        } else {
+            tagPlayerRole.setText("Role: " + p.getRole());
+            tagPlayerRole.setTextFill(Color.web(BLUE_TEXT));
+        }
+        
         setTagVisible(tagPlayerShield,    p.isShielded());
         setTagVisible(tagPlayerConfusion, p.isConfused(), "[Confused] (" + p.getConfusionTurns() + ")");
         setTagVisible(tagPlayerFreeze, p.isFrozen());
+        
+        /* TODO: Uncomment these lines and use your exact Engine method names to display Momentum/Focus
+         * if (p.getClass().getSimpleName().equals("Dasher")) {
+         * setTagVisible(tagPlayerMomentum, ((game.engine.monsters.Dasher)p).isMomentumActive()); 
+         * }
+         * if (p.getClass().getSimpleName().equals("Dynamo")) {
+         * setTagVisible(tagPlayerFocus, ((game.engine.monsters.Dynamo)p).isFocusActive()); 
+         * }
+         */
+         setTagVisible(tagPlayerMomentum, false); 
+         setTagVisible(tagPlayerFocus, false);
 
         lblOppName.setText(o.getName());
         lblOppType.setText(o.getClass().getSimpleName());
         lblOppEnergy.setText("Energy:  " + o.getEnergy() + "  /  1000");
         barOppEnergy.setProgress(Math.min(1.0, o.getEnergy() / 1000.0));
 
-        tagOppRole.setText("Role: " + o.getRole());
+        if (o.isConfused()) {
+            Role originalO = (o.getRole() == Role.SCARER) ? Role.LAUGHER : Role.SCARER;
+            tagOppRole.setText("Role: " + originalO + " (Now " + o.getRole() + ")");
+            tagOppRole.setTextFill(Color.web(ORANGE));
+        } else {
+            tagOppRole.setText("Role: " + o.getRole());
+            tagOppRole.setTextFill(Color.web(GREEN_TEXT));
+        }
+        
         setTagVisible(tagOppShield,    o.isShielded());
         setTagVisible(tagOppConfusion, o.isConfused(), "[Confused] (" + o.getConfusionTurns() + ")");
         setTagVisible(tagOppFreeze, o.isFrozen());
+        
+        /* TODO: Uncomment these lines and use your exact Engine method names to display Momentum/Focus
+         * if (o.getClass().getSimpleName().equals("Dasher")) {
+         * setTagVisible(tagOppMomentum, ((game.engine.monsters.Dasher)o).isMomentumActive()); 
+         * }
+         * if (o.getClass().getSimpleName().equals("Dynamo")) {
+         * setTagVisible(tagOppFocus, ((game.engine.monsters.Dynamo)o).isFocusActive()); 
+         * }
+         */
+         setTagVisible(tagOppMomentum, false); 
+         setTagVisible(tagOppFocus, false);
 
         lblPileCount.setText("Deck: " + getDeckSize() + " cards");
 
@@ -748,7 +812,7 @@ public class GameWindow {
     }
 
     // ======================================================================
-    // STRICT ENGINE TURN EXECUTION
+    // STRICT ENGINE TURN EXECUTION & 3D DICE ANIMATION
     // ======================================================================
     private void performAnimatedRoll() {
         btnRoll.setDisable(true);
@@ -760,26 +824,82 @@ public class GameWindow {
 
         int finalRoll = (int)(Math.random() * 6) + 1;
 
-        Timeline anim = new Timeline();
-        for (int i = 0; i < 14; i++) {
-            Duration d = Duration.millis(i * 45);
-            anim.getKeyFrames().add(new KeyFrame(d, e -> {
+        ImageView floatingDice = new ImageView();
+        floatingDice.setFitWidth(80);
+        floatingDice.setFitHeight(80);
+        floatingDice.setEffect(new DropShadow(15, Color.BLACK));
+        animationLayer.getChildren().add(floatingDice);
+
+        javafx.geometry.Bounds startBounds = diceView.localToScene(diceView.getBoundsInLocal());
+        javafx.geometry.Bounds layerStart = animationLayer.sceneToLocal(startBounds);
+        double startX = layerStart.getMinX();
+        double startY = layerStart.getMinY();
+
+        javafx.geometry.Bounds boardBounds = boardGrid.localToScene(boardGrid.getBoundsInLocal());
+        javafx.geometry.Bounds layerBoard = animationLayer.sceneToLocal(boardBounds);
+        
+        double endX = layerBoard.getMinX() + (layerBoard.getWidth() / 2) - 40 + (Math.random() * 200 - 100);
+        double endY = layerBoard.getMinY() + (layerBoard.getHeight() / 2) - 40 + (Math.random() * 200 - 100);
+
+        floatingDice.setLayoutX(startX);
+        floatingDice.setLayoutY(startY);
+
+        TranslateTransition slide = new TranslateTransition(Duration.millis(800), floatingDice);
+        slide.setToX(endX - startX);
+        slide.setToY(endY - startY);
+        slide.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+
+        ScaleTransition bounce = new ScaleTransition(Duration.millis(400), floatingDice);
+        bounce.setFromX(1.0); bounce.setFromY(1.0);
+        bounce.setToX(2.5); bounce.setToY(2.5);
+        bounce.setAutoReverse(true);
+        bounce.setCycleCount(2);
+
+        javafx.animation.RotateTransition spin = new javafx.animation.RotateTransition(Duration.millis(800), floatingDice);
+        spin.setByAngle(720 + (Math.random() * 360));
+
+        Timeline faceChanger = new Timeline();
+        for (int i = 0; i < 16; i++) {
+            Duration d = Duration.millis(i * 50);
+            faceChanger.getKeyFrames().add(new KeyFrame(d, e -> {
                 int face = (int)(Math.random() * 6) + 1;
                 Image img = loadImage("dice" + face + ".png");
-                if (img != null) { diceView.setImage(img); diceView.setRotate(Math.random() * 360); }
+                if (img != null) floatingDice.setImage(img);
             }));
         }
-        anim.getKeyFrames().add(new KeyFrame(Duration.millis(660), e -> {
-            playSound("thud.wav"); shakeScreen();
+
+        faceChanger.getKeyFrames().add(new KeyFrame(Duration.millis(800), e -> {
             Image img = loadImage("dice" + finalRoll + ".png");
-            if (img != null) { diceView.setImage(img); diceView.setRotate(0); }
-            executeMove(finalRoll);
+            if (img != null) floatingDice.setImage(img);
         }));
-        anim.play();
+
+        javafx.animation.ParallelTransition throwAnimation = new javafx.animation.ParallelTransition(slide, bounce, spin, faceChanger);
+
+        throwAnimation.setOnFinished(e -> {
+            playSound("thud.wav"); 
+            // Removed shakeScreen() here to remove vibration on dice roll
+            
+            Image finalImg = loadImage("dice" + finalRoll + ".png");
+            if (finalImg != null) { diceView.setImage(finalImg); diceView.setRotate(0); }
+            
+            Timeline pause = new Timeline(new KeyFrame(Duration.millis(700), ev -> {
+                FadeTransition fadeOut = new FadeTransition(Duration.millis(200), floatingDice);
+                fadeOut.setToValue(0);
+                fadeOut.setOnFinished(ev2 -> {
+                    animationLayer.getChildren().remove(floatingDice);
+                    executeMove(finalRoll);
+                });
+                fadeOut.play();
+            }));
+            pause.play();
+        });
+
+        throwAnimation.play();
     }
 
     private void executeMove(int roll) {
         Monster current = game.getCurrent();
+        int oldPos = current.getPosition();
 
         log(current.getName(), "rolled a " + roll + "!", "neutral");
         
@@ -797,6 +917,7 @@ public class GameWindow {
 
         try {
             game.playTurn(roll);
+            int newPos = current.getPosition();
             
             int deckSizeAfter = Board.getCards() != null ? Board.getCards().size() : 0;
             if (deckSizeAfter < deckSizeBefore && expectedCard != null) {
@@ -804,14 +925,29 @@ public class GameWindow {
                 notifyCardDrawn("[CARD]", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
             }
             
+            if (oldPos != newPos) {
+                isAnimating = true;
+                refreshBoard(); 
+                
+                boolean walkStepByStep = Math.abs(newPos - oldPos) <= 6;
+                
+                animateMovement(current, oldPos, newPos, walkStepByStep, () -> {
+                    isAnimating = false;
+                    refreshAll();
+                    checkWin();
+                });
+            } else {
+                refreshAll();
+                checkWin();
+            }
+            
         } catch (InvalidMoveException ex) {
             showError("Move Blocked", current.getName() + " had its move reverted or blocked by an obstacle! Roll again.");
+            refreshAll();
         } catch (Exception ex) {
             showError("Error", ex.getMessage());
+            refreshAll();
         }
-
-        refreshAll();
-        checkWin();
     }
 
     private void handlePowerup() {
@@ -853,10 +989,165 @@ public class GameWindow {
         boolean playerWon = winner == game.getPlayer();
         showWinScreen(winner, playerWon);
     }
+    
+    // ======================================================================
+    // 3D BOARD ANIMATION ENGINE
+    // ======================================================================
+    private javafx.geometry.Point2D getCellCenter(int idx) {
+        StackPane pane = cellPanes[idx];
+        javafx.geometry.Bounds bounds = pane.localToScene(pane.getBoundsInLocal());
+        javafx.geometry.Bounds layerBounds = animationLayer.sceneToLocal(bounds);
+        
+        double x = layerBounds.getMinX() + (layerBounds.getWidth() / 2) - 20;
+        double y = layerBounds.getMinY() + (layerBounds.getHeight() / 2) - 20;
+        return new javafx.geometry.Point2D(x, y);
+    }
+
+    private void animateMovement(Monster m, int startIdx, int endIdx, boolean walkStepByStep, Runnable onFinished) {
+        playSound("hover.mp3");
+
+        String ringColor = (m == game.getPlayer()) ? PURPLE : GREEN_DIM;
+        StackPane actualToken = buildDynamicAvatar(m, ringColor, 40); 
+        
+        Ellipse shadow = new Ellipse(18, 6);
+        shadow.setFill(Color.rgb(0, 0, 0, 0.6));
+        shadow.setTranslateY(24); 
+        shadow.setEffect(new javafx.scene.effect.GaussianBlur(4));
+
+        StackPane tokenWrapper = new StackPane(shadow, actualToken);
+
+        javafx.geometry.Point2D startPos = getCellCenter(startIdx);
+        tokenWrapper.setLayoutX(startPos.getX());
+        tokenWrapper.setLayoutY(startPos.getY());
+        animationLayer.getChildren().add(tokenWrapper);
+
+        javafx.animation.SequentialTransition masterSequence = new javafx.animation.SequentialTransition();
+
+        if (walkStepByStep) {
+            int stepDir = startIdx < endIdx ? 1 : -1;
+            int currentIdx = startIdx;
+
+            while (currentIdx != endIdx) {
+                currentIdx += stepDir;
+                javafx.geometry.Point2D nextPos = getCellCenter(currentIdx);
+
+                TranslateTransition moveGrid = new TranslateTransition(Duration.millis(350), tokenWrapper);
+                moveGrid.setToX(nextPos.getX() - startPos.getX());
+                moveGrid.setToY(nextPos.getY() - startPos.getY());
+
+                TranslateTransition jumpUp = new TranslateTransition(Duration.millis(175), actualToken);
+                jumpUp.setByY(-35); 
+                jumpUp.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+                TranslateTransition jumpDown = new TranslateTransition(Duration.millis(175), actualToken);
+                jumpDown.setByY(35);
+                jumpDown.setInterpolator(javafx.animation.Interpolator.EASE_IN);
+                javafx.animation.SequentialTransition jumpY = new javafx.animation.SequentialTransition(jumpUp, jumpDown);
+
+                ScaleTransition scaleUp = new ScaleTransition(Duration.millis(175), actualToken);
+                scaleUp.setByX(0.3); scaleUp.setByY(0.3);
+                ScaleTransition scaleDown = new ScaleTransition(Duration.millis(175), actualToken);
+                scaleDown.setByX(-0.3); scaleDown.setByY(-0.3);
+                javafx.animation.SequentialTransition scaleZ = new javafx.animation.SequentialTransition(scaleUp, scaleDown);
+
+                ScaleTransition shadowShrink = new ScaleTransition(Duration.millis(175), shadow);
+                shadowShrink.setToX(0.4); shadowShrink.setToY(0.4);
+                ScaleTransition shadowGrow = new ScaleTransition(Duration.millis(175), shadow);
+                shadowGrow.setToX(1.0); shadowGrow.setToY(1.0);
+                javafx.animation.SequentialTransition shadowSeq = new javafx.animation.SequentialTransition(shadowShrink, shadowGrow);
+
+                javafx.animation.ParallelTransition single3DHop = new javafx.animation.ParallelTransition(moveGrid, jumpY, scaleZ, shadowSeq);
+                masterSequence.getChildren().add(single3DHop);
+            }
+            
+        } else {
+            javafx.geometry.Point2D nextPos = getCellCenter(endIdx);
+            
+            TranslateTransition moveGrid = new TranslateTransition(Duration.millis(1000), tokenWrapper);
+            moveGrid.setToX(nextPos.getX() - startPos.getX());
+            moveGrid.setToY(nextPos.getY() - startPos.getY());
+
+            TranslateTransition jumpUp = new TranslateTransition(Duration.millis(500), actualToken);
+            jumpUp.setByY(-90);
+            jumpUp.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+            TranslateTransition jumpDown = new TranslateTransition(Duration.millis(500), actualToken);
+            jumpDown.setByY(90);
+            jumpDown.setInterpolator(javafx.animation.Interpolator.EASE_IN);
+            javafx.animation.SequentialTransition jumpY = new javafx.animation.SequentialTransition(jumpUp, jumpDown);
+
+            ScaleTransition scaleUp = new ScaleTransition(Duration.millis(500), actualToken);
+            scaleUp.setByX(0.7); scaleUp.setByY(0.7);
+            ScaleTransition scaleDown = new ScaleTransition(Duration.millis(500), actualToken);
+            scaleDown.setByX(-0.7); scaleDown.setByY(-0.7);
+            javafx.animation.SequentialTransition scaleZ = new javafx.animation.SequentialTransition(scaleUp, scaleDown);
+
+            ScaleTransition shadowShrink = new ScaleTransition(Duration.millis(500), shadow);
+            shadowShrink.setToX(0.2); shadowShrink.setToY(0.2);
+            ScaleTransition shadowGrow = new ScaleTransition(Duration.millis(500), shadow);
+            shadowGrow.setToX(1.0); shadowGrow.setToY(1.0);
+            javafx.animation.SequentialTransition shadowSeq = new javafx.animation.SequentialTransition(shadowShrink, shadowGrow);
+
+            javafx.animation.ParallelTransition huge3DHop = new javafx.animation.ParallelTransition(moveGrid, jumpY, scaleZ, shadowSeq);
+            masterSequence.getChildren().add(huge3DHop);
+        }
+
+        masterSequence.setOnFinished(e -> {
+            animationLayer.getChildren().remove(tokenWrapper);
+            onFinished.run();
+        });
+        
+        masterSequence.play();
+    }
+
 
     // ======================================================================
     // POPUPS
     // ======================================================================
+    
+    private void showInstructions() {
+        playSound("hover.mp3");
+        Stage pop = new Stage();
+        pop.initOwner(stage);
+        pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        pop.initStyle(StageStyle.UTILITY);
+
+        VBox layout = new VBox(18);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(38, 46, 38, 46));
+        layout.setStyle("-fx-background-color:linear-gradient(to bottom right,#1a0a2e,#0a0a0f);"
+                      + "-fx-border-color:" + GOLD + ";-fx-border-width:2;"
+                      + "-fx-border-radius:14;-fx-background-radius:14;"
+                      + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
+
+        Label head = new Label("HOW TO PLAY");
+        head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 24));
+        head.setTextFill(Color.web(GOLD));
+        head.setEffect(new DropShadow(8, Color.web(GOLD, 0.5)));
+
+        String instructions = "1. Roll the dice to move along the 100-cell floor.\n\n"
+                            + "2. Collect energy from doors matching your role.\n\n"
+                            + "3. Avoid Contamination Socks and rival doors.\n\n"
+                            + "4. Reach Boo's Door (Cell 99) with ≥ 1000 Energy to win!";
+        Label body = new Label(instructions);
+        body.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        body.setTextFill(Color.web(TEXT_LIGHT));
+        body.setWrapText(true); body.setMaxWidth(400);
+
+        Button ok = actionButton("GOT IT", GOLD, "#1a0a00");
+        ok.setPrefWidth(180);
+        ok.setOnAction(e -> {
+            FadeTransition ft = new FadeTransition(Duration.millis(180), layout);
+            ft.setToValue(0); ft.setOnFinished(ev -> pop.close()); ft.play();
+        });
+
+        layout.getChildren().addAll(head, body, ok);
+        StackPane errRoot = new StackPane(layout);
+        errRoot.setStyle("-fx-background-color: #0a0a1a;");
+        Scene sc = new Scene(errRoot);
+        pop.setTitle("Game Rules");
+        fadeInLayout(layout);
+        pop.setScene(sc); pop.show();
+    }
+
     private void showWinScreen(Monster winner, boolean playerWon) {
         Stage pop = new Stage();
         pop.initOwner(stage);
@@ -880,7 +1171,7 @@ public class GameWindow {
         header.setTextFill(Color.web(playerWon ? GOLD : RED));
         header.setEffect(new DropShadow(10, Color.web(playerWon ? GOLD : RED, 0.6)));
 
-        Label detail = new Label(winner.getName() + " claimed Boo's Door!\n"
+        Label detail = new Label(winner.getName() + " (" + winner.getRole() + ") claimed Boo's Door!\n"
                 + "Final Energy: " + winner.getEnergy() + " E");
         detail.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         detail.setTextFill(Color.web(TEXT_LIGHT));
