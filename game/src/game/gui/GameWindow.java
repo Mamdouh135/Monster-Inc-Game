@@ -2,6 +2,7 @@ package game.gui;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
@@ -121,6 +122,7 @@ public class GameWindow {
     // ANIMATION VARIABLES
     private javafx.scene.layout.Pane animationLayer;
     private boolean isAnimating = false;
+    private MediaPlayer bgMusic;
 
     // ======================================================================
     // CONSTRUCTOR
@@ -130,11 +132,13 @@ public class GameWindow {
         try {
             this.game = new Game(Role.valueOf(side));
         } catch (Exception e) {
-            showError("System Error", "Engine failure: " + e.getMessage());
+            e.printStackTrace(); // Print real cause to Eclipse console
+            showError("System Error", "Engine failure: " + e.getMessage() + "\n\nCheck that cards.csv / cells.csv / monsters.csv are in the working directory.");
             return;
         }
         buildUI();
         cacheEnergy();
+        startGameMusic();
     }
 
     private void cacheEnergy() {
@@ -160,10 +164,43 @@ public class GameWindow {
             if (file.exists()) {
                 Media media = new Media(file.toURI().toString());
                 MediaPlayer mp = new MediaPlayer(media);
+                mp.setVolume(Main.effectsVolume);
                 mp.setOnEndOfMedia(mp::dispose);
                 mp.play();
             }
         } catch (Exception ignored) {}
+    }
+
+    // ======================================================================
+    // BACKGROUND MUSIC
+    // ======================================================================
+    private void startGameMusic() {
+        try {
+            File file = new File("assets/game_music.mp3");
+            if (!file.exists()) return;
+            Media media = new Media(file.toURI().toString());
+            bgMusic = new MediaPlayer(media);
+            bgMusic.setCycleCount(MediaPlayer.INDEFINITE);
+            bgMusic.setVolume(0);
+            bgMusic.play();
+            // Fade in over 2.5 seconds
+            Timeline fadeIn = new Timeline(
+                new KeyFrame(Duration.ZERO,        new KeyValue(bgMusic.volumeProperty(), 0.0)),
+                new KeyFrame(Duration.millis(2500), new KeyValue(bgMusic.volumeProperty(), Main.musicVolume))
+            );
+            fadeIn.play();
+        } catch (Exception ignored) {}
+    }
+
+    private void stopGameMusic() {
+        if (bgMusic == null) return;
+        double vol = bgMusic.getVolume();
+        Timeline fadeOut = new Timeline(
+            new KeyFrame(Duration.ZERO,        new KeyValue(bgMusic.volumeProperty(), vol)),
+            new KeyFrame(Duration.millis(600),  new KeyValue(bgMusic.volumeProperty(), 0.0))
+        );
+        fadeOut.setOnFinished(e -> { bgMusic.stop(); bgMusic.dispose(); bgMusic = null; });
+        fadeOut.play();
     }
 
     private static final java.util.Map<String, String> MONSTER_IMG_MAP = new java.util.HashMap<>();
@@ -308,10 +345,48 @@ public class GameWindow {
 
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // ── HOW TO PLAY (compact top-bar button) ──
+        String helpDef = "-fx-background-color:linear-gradient(to right,#082f49,#064e3b);"
+            + "-fx-text-fill:" + CYAN + ";-fx-padding:7 16;"
+            + "-fx-background-radius:8;-fx-border-radius:8;"
+            + "-fx-border-color:" + CYAN + ";-fx-border-width:1.5;"
+            + "-fx-font-size:12px;-fx-font-weight:bold;-fx-cursor:hand;";
+        String helpHov = "-fx-background-color:linear-gradient(to right,#0c3f60,#085e48);"
+            + "-fx-text-fill:" + CYAN + ";-fx-padding:7 16;"
+            + "-fx-background-radius:8;-fx-border-radius:8;"
+            + "-fx-border-color:" + CYAN + ";-fx-border-width:2;"
+            + "-fx-font-size:12px;-fx-font-weight:bold;-fx-cursor:hand;"
+            + "-fx-effect:dropshadow(three-pass-box," + CYAN + "99,12,0.5,0,0);";
+        Button topBtnHelp = new Button("HOW TO PLAY");
+        topBtnHelp.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        topBtnHelp.setStyle(helpDef);
+        topBtnHelp.setOnMouseEntered(e -> topBtnHelp.setStyle(helpHov));
+        topBtnHelp.setOnMouseExited(e -> topBtnHelp.setStyle(helpDef));
+        topBtnHelp.setOnAction(e -> showInstructions());
+
+        // ── SETTINGS (compact top-bar button) ──
+        String setDef = "-fx-background-color:linear-gradient(to right,#1a0a00,#2d1500);"
+            + "-fx-text-fill:" + GOLD + ";-fx-padding:7 16;"
+            + "-fx-background-radius:8;-fx-border-radius:8;"
+            + "-fx-border-color:" + GOLD + ";-fx-border-width:1.5;"
+            + "-fx-font-size:12px;-fx-font-weight:bold;-fx-cursor:hand;";
+        String setHov = "-fx-background-color:linear-gradient(to right,#2d1500,#4a2200);"
+            + "-fx-text-fill:" + GOLD + ";-fx-padding:7 16;"
+            + "-fx-background-radius:8;-fx-border-radius:8;"
+            + "-fx-border-color:" + GOLD + ";-fx-border-width:2;"
+            + "-fx-font-size:12px;-fx-font-weight:bold;-fx-cursor:hand;"
+            + "-fx-effect:dropshadow(three-pass-box," + GOLD + "99,12,0.5,0,0);";
+        Button topBtnSettings = new Button("SETTINGS");
+        topBtnSettings.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        topBtnSettings.setStyle(setDef);
+        topBtnSettings.setOnMouseEntered(e -> topBtnSettings.setStyle(setHov));
+        topBtnSettings.setOnMouseExited(e -> topBtnSettings.setStyle(setDef));
+        topBtnSettings.setOnAction(e -> showSettings());
+
         lblTurnBadge = new Label("TURN INFO");
         styleTurnBadge(lblTurnBadge, "PREPARING...", true);
 
-        bar.getChildren().addAll(title, sub, spacer, lblTurnBadge);
+        bar.getChildren().addAll(title, sub, spacer, topBtnHelp, topBtnSettings, lblTurnBadge);
         return bar;
     }
 
@@ -368,6 +443,8 @@ public class GameWindow {
                 sep(), btnPlayerPowerup, div, cheats);
 
         panel.getChildren().add(playerCard);
+        // Entrance animation
+        animateCardEntrance(playerCard, 80);
         return panel;
     }
 
@@ -544,17 +621,17 @@ public class GameWindow {
 
         cardInfoCard.getChildren().addAll(cardVisualBox, pileRow);
 
-        Button btnHelp = actionButton("HOW TO PLAY", "#2d2860", "#ffffff");
-        VBox.setMargin(btnHelp, new Insets(12, 0, 0, 0));
-        btnHelp.setOnAction(e -> showInstructions());
-
         Button btnExit = new Button("ABANDON GAME");
         btnExit.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 16));
         btnExit.setMaxWidth(Double.MAX_VALUE);
-        VBox.setMargin(btnExit, new Insets(6, 0, 0, 0));
+        VBox.setMargin(btnExit, new Insets(12, 0, 0, 0));
         styleExitButton(btnExit);
 
-        panel.getChildren().addAll(oppCard, legendCard, cardInfoCard, btnHelp, btnExit);
+        panel.getChildren().addAll(oppCard, legendCard, cardInfoCard, btnExit);
+        // Staggered entrance animations
+        animateCardEntrance(oppCard,      80);
+        animateCardEntrance(legendCard,   180);
+        animateCardEntrance(cardInfoCard, 280);
         return panel;
     }
 
@@ -816,6 +893,7 @@ public class GameWindow {
     }
 
     private void shakeScreen() {
+        if (mainLayout == null) return; // Guard: called before buildUI()
         Timeline shake = new Timeline(
             new KeyFrame(Duration.millis( 25), e -> mainLayout.setTranslateX(6)),
             new KeyFrame(Duration.millis( 55), e -> mainLayout.setTranslateX(-6)),
@@ -1010,6 +1088,7 @@ public class GameWindow {
     private void checkWin() {
         Monster winner = game.getWinner();
         if (winner == null) return;
+        stopGameMusic();
         playSound("win.wav");
         boolean playerWon = winner == game.getPlayer();
         showWinScreen(winner, playerWon);
@@ -1127,50 +1206,57 @@ public class GameWindow {
     // ======================================================================
     // POPUPS
     // ======================================================================
-    
     private void showInstructions() {
         playSound("hover.mp3");
-        Stage pop = new Stage();
-        pop.initOwner(stage);
-        pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-        pop.initStyle(StageStyle.UTILITY);
 
         VBox layout = new VBox(18);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(38, 46, 38, 46));
+        layout.setMaxWidth(520);
+        layout.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
         layout.setStyle("-fx-background-color:linear-gradient(to bottom right,#1a0a2e,#0a0a0f);"
-                      + "-fx-border-color:" + GOLD + ";-fx-border-width:2;"
+                      + "-fx-border-color:" + CYAN + ";-fx-border-width:2;"
                       + "-fx-border-radius:14;-fx-background-radius:14;"
                       + "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
 
         Label head = new Label("HOW TO PLAY");
         head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 24));
-        head.setTextFill(Color.web(GOLD));
-        head.setEffect(new DropShadow(8, Color.web(GOLD, 0.5)));
+        head.setTextFill(Color.web(CYAN));
+        head.setEffect(new DropShadow(8, Color.web(CYAN, 0.5)));
 
         String instructions = "1. Roll the dice to move along the 100-cell floor.\n\n"
                             + "2. Collect energy from doors matching your role.\n\n"
                             + "3. Avoid Contamination Socks and rival doors.\n\n"
-                            + "4. Reach Boo's Door (Cell 99) with ≥ 1000 Energy to win!";
+                            + "4. Reach Boo’s Door (Cell 99) with ≥ 1000 Energy to win!";
         Label body = new Label(instructions);
         body.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         body.setTextFill(Color.web(TEXT_LIGHT));
         body.setWrapText(true); body.setMaxWidth(400);
 
-        Button ok = actionButton("GOT IT", GOLD, "#1a0a00");
+        StackPane overlayPane = new StackPane(layout);
+        overlayPane.setStyle("-fx-background-color:rgba(0,0,0,0.75);");
+
+        Button ok = actionButton("GOT IT", CYAN, "#0a0a1a");
         ok.setPrefWidth(180);
         ok.setOnAction(e -> {
-            FadeTransition ft = new FadeTransition(Duration.millis(180), layout);
-            ft.setToValue(0); ft.setOnFinished(ev -> pop.close()); ft.play();
+            FadeTransition ft = new FadeTransition(Duration.millis(200), overlayPane);
+            ft.setToValue(0); ft.setOnFinished(ev -> rootOverlay.getChildren().remove(overlayPane)); ft.play();
+        });
+        overlayPane.setOnMouseClicked(e -> {
+            if (e.getTarget() == overlayPane) {
+                FadeTransition ft = new FadeTransition(Duration.millis(200), overlayPane);
+                ft.setToValue(0); ft.setOnFinished(ev -> rootOverlay.getChildren().remove(overlayPane)); ft.play();
+            }
         });
 
         layout.getChildren().addAll(head, body, ok);
-        StackPane errRoot = new StackPane(layout);
-        errRoot.setStyle("-fx-background-color: #0a0a1a;");
-        Scene sc = new Scene(errRoot);
-        pop.setTitle("Game Rules");
-        fadeInLayout(layout);
-        pop.setScene(sc); pop.show();
+        overlayPane.setOpacity(0);
+        rootOverlay.getChildren().add(overlayPane);
+
+        layout.setTranslateY(24);
+        FadeTransition ft = new FadeTransition(Duration.millis(260), overlayPane); ft.setToValue(1);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(260), layout); tt.setToY(0);
+        ft.play(); tt.play();
     }
 
     private void showWinScreen(Monster winner, boolean playerWon) {
@@ -1232,9 +1318,10 @@ public class GameWindow {
     private void showError(String title, String msg) {
         playSound("error.mp3"); shakeScreen();
         Stage pop = new Stage();
-        pop.initOwner(stage);
+        // Don't use initOwner — it hides behind fullscreen on Windows
         pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
         pop.initStyle(StageStyle.UTILITY);
+        pop.setAlwaysOnTop(true);
 
         VBox layout = new VBox(18);
         layout.setAlignment(Pos.CENTER);
@@ -1269,6 +1356,95 @@ public class GameWindow {
         pop.setTitle(title);
         fadeInLayout(layout);
         pop.setScene(sc); pop.show();
+    }
+
+    // ======================================================================
+    // SETTINGS POPUP
+    // ======================================================================
+    private void showSettings() {
+        playSound("hover.mp3");
+
+        VBox layout = new VBox(22);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(38, 54, 38, 54));
+        layout.setMaxWidth(420);
+        layout.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        layout.setStyle("-fx-background-color:linear-gradient(to bottom right,#1a0a2e,#0a0a0f);" +
+            "-fx-border-color:" + GOLD + ";-fx-border-width:2;" +
+            "-fx-border-radius:14;-fx-background-radius:14;" +
+            "-fx-effect:dropshadow(three-pass-box,rgba(0,0,0,0.9),25,0.3,0,8);");
+
+        Label head = new Label("SETTINGS");
+        head.setFont(Font.font("Arial Black", FontWeight.EXTRA_BOLD, 22));
+        head.setTextFill(Color.web(GOLD));
+        head.setEffect(new DropShadow(8, Color.web(GOLD, 0.5)));
+
+        VBox musicSec   = buildSliderSection("MUSIC VOLUME",   Main.musicVolume,   PURPLE, v -> {
+            Main.musicVolume = v;
+            if (bgMusic != null) bgMusic.setVolume(Main.musicVolume);
+        });
+        VBox effectsSec = buildSliderSection("EFFECTS VOLUME", Main.effectsVolume, CYAN,   v -> {
+            Main.effectsVolume = v;
+        });
+
+        StackPane overlayPane = new StackPane(layout);
+        overlayPane.setStyle("-fx-background-color:rgba(0,0,0,0.75);");
+
+        Button ok = new Button("SAVE & CLOSE");
+        ok.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        ok.setStyle("-fx-background-color:" + GOLD + ";-fx-text-fill:#1a0a00;" +
+            "-fx-padding:10 30;-fx-background-radius:8;-fx-cursor:hand;");
+        ok.setPrefWidth(220);
+        VBox.setMargin(ok, new Insets(8, 0, 0, 0));
+        ok.setOnAction(e -> {
+            FadeTransition ft = new FadeTransition(Duration.millis(200), overlayPane);
+            ft.setToValue(0); ft.setOnFinished(ev -> rootOverlay.getChildren().remove(overlayPane)); ft.play();
+        });
+        overlayPane.setOnMouseClicked(e -> {
+            if (e.getTarget() == overlayPane) {
+                FadeTransition ft = new FadeTransition(Duration.millis(200), overlayPane);
+                ft.setToValue(0); ft.setOnFinished(ev -> rootOverlay.getChildren().remove(overlayPane)); ft.play();
+            }
+        });
+
+        layout.getChildren().addAll(head, musicSec, effectsSec, ok);
+        overlayPane.setOpacity(0);
+        rootOverlay.getChildren().add(overlayPane);
+
+        layout.setTranslateY(24);
+        FadeTransition ft2 = new FadeTransition(Duration.millis(260), overlayPane); ft2.setToValue(1);
+        TranslateTransition tt2 = new TranslateTransition(Duration.millis(260), layout); tt2.setToY(0);
+        ft2.play(); tt2.play();
+    }
+
+    private VBox buildSliderSection(String labelText, double initial, String accent,
+                                    java.util.function.DoubleConsumer onChange) {
+        VBox sec = new VBox(8);
+        sec.setAlignment(Pos.CENTER_LEFT);
+        sec.setMaxWidth(300);
+
+        Label lbl = new Label(labelText);
+        lbl.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        lbl.setTextFill(Color.web(accent));
+
+        javafx.scene.control.Slider slider = new javafx.scene.control.Slider(0, 1, initial);
+        slider.setPrefWidth(280);
+        slider.setStyle("-fx-control-inner-background:" + accent + "33;" +
+            "-fx-accent:" + accent + ";");
+
+        Label valLabel = new Label(String.format("%.0f%%", initial * 100));
+        valLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        valLabel.setTextFill(Color.web(TEXT_LIGHT));
+
+        slider.valueProperty().addListener((obs, old, val) -> {
+            onChange.accept(val.doubleValue());
+            valLabel.setText(String.format("%.0f%%", val.doubleValue() * 100));
+        });
+
+        HBox row = new HBox(12, slider, valLabel);
+        row.setAlignment(Pos.CENTER_LEFT);
+        sec.getChildren().addAll(lbl, row);
+        return sec;
     }
 
     private void handleExitPrompt() {
@@ -1348,24 +1524,80 @@ public class GameWindow {
     private VBox monsterCard() {
         VBox box = new VBox(8);
         box.setPadding(new Insets(16));
+        String baseBorder = "#7c3aed44";
+        String hovBorder  = "#a78bfa";
         box.setStyle("-fx-background-color:" + BG_CARD + ";"
-                   + "-fx-border-color:#7c3aed44;-fx-border-width:1.5;"
+                   + "-fx-border-color:" + baseBorder + ";-fx-border-width:1.5;"
                    + "-fx-border-radius:14;-fx-background-radius:14;");
+
+        ScaleTransition scaleIn  = new ScaleTransition(Duration.millis(180), box);
+        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(180), box);
+        scaleIn.setToX(1.025); scaleIn.setToY(1.025);
+        scaleOut.setToX(1.0);  scaleOut.setToY(1.0);
+
+        box.setOnMouseEntered(e -> {
+            box.setStyle("-fx-background-color:" + BG_CARD + ";"
+                       + "-fx-border-color:" + hovBorder + ";-fx-border-width:2;"
+                       + "-fx-border-radius:14;-fx-background-radius:14;"
+                       + "-fx-effect:dropshadow(three-pass-box,#7c3aed88,18,0.4,0,0);");
+            scaleIn.playFromStart();
+        });
+        box.setOnMouseExited(e -> {
+            box.setStyle("-fx-background-color:" + BG_CARD + ";"
+                       + "-fx-border-color:" + baseBorder + ";-fx-border-width:1.5;"
+                       + "-fx-border-radius:14;-fx-background-radius:14;");
+            scaleOut.playFromStart();
+        });
         return box;
     }
 
     private VBox infoCard(String title) {
         VBox box = new VBox(8);
         box.setPadding(new Insets(12));
+        String baseBorder = "#7c3aed33";
+        String hovBorder  = "#7c3aed99";
         box.setStyle("-fx-background-color:" + BG_CARD + ";"
-                   + "-fx-border-color:#7c3aed33;-fx-border-width:1.5;"
+                   + "-fx-border-color:" + baseBorder + ";-fx-border-width:1.5;"
                    + "-fx-border-radius:14;-fx-background-radius:14;");
+
+        ScaleTransition scaleIn  = new ScaleTransition(Duration.millis(160), box);
+        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(160), box);
+        scaleIn.setToX(1.018); scaleIn.setToY(1.018);
+        scaleOut.setToX(1.0);  scaleOut.setToY(1.0);
+
+        box.setOnMouseEntered(e -> {
+            box.setStyle("-fx-background-color:" + BG_CARD + ";"
+                       + "-fx-border-color:" + hovBorder + ";-fx-border-width:2;"
+                       + "-fx-border-radius:14;-fx-background-radius:14;"
+                       + "-fx-effect:dropshadow(three-pass-box,#7c3aed66,14,0.3,0,0);");
+            scaleIn.playFromStart();
+        });
+        box.setOnMouseExited(e -> {
+            box.setStyle("-fx-background-color:" + BG_CARD + ";"
+                       + "-fx-border-color:" + baseBorder + ";-fx-border-width:1.5;"
+                       + "-fx-border-radius:14;-fx-background-radius:14;");
+            scaleOut.playFromStart();
+        });
+
         Label h = new Label(title);
         h.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 14));
         h.setTextFill(Color.web(PURPLE));
         h.setStyle("-fx-letter-spacing:1.5px;");
         box.getChildren().add(h);
         return box;
+    }
+
+    /** Slide-in + fade-in entrance for a card (call after children are added). */
+    private void animateCardEntrance(VBox card, double delayMs) {
+        card.setOpacity(0);
+        card.setTranslateY(22);
+        FadeTransition ft = new FadeTransition(Duration.millis(380), card);
+        ft.setToValue(1);
+        ft.setDelay(Duration.millis(delayMs));
+        TranslateTransition tt = new TranslateTransition(Duration.millis(380), card);
+        tt.setToY(0);
+        tt.setDelay(Duration.millis(delayMs));
+        ft.play(); tt.play();
     }
 
     private Label makeTag(String text, String fg, String bg, String border) {
@@ -1523,7 +1755,7 @@ public class GameWindow {
         ImageView ic = loadIcon("exit.png", 20); 
         if (ic != null) btn.setGraphic(ic);
         
-        btn.setOnAction(e -> handleExitPrompt());
+        btn.setOnAction(e -> { stopGameMusic(); handleExitPrompt(); });
     }
 
     private void fadeInLayout(VBox layout) {
