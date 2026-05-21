@@ -813,7 +813,7 @@ public class GameWindow {
             Monster m = ((MonsterCell) ec).getCellMonster();
             String imgF = MONSTER_IMG_MAP.get(m.getName()); return imgF != null ? imgF : "monster.png";
         }
-        if (ec instanceof CardCell)    return "card.png";
+        if (ec instanceof CardCell)    return "mystery.png";
         if (ec instanceof ConveyorBelt) return "belt.png";
         if (ec instanceof ContaminationSock) return "sock.png";
         return "";
