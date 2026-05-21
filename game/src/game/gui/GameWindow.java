@@ -306,6 +306,10 @@ public class GameWindow {
         rootOverlay = new StackPane(root, animationLayer);
         
         Scene scene = new Scene(rootOverlay, 1380, 870);
+        Image cursorImg = loadImage("cursor.png");
+        if (cursorImg != null) {
+            scene.setCursor(new javafx.scene.ImageCursor(cursorImg));
+        }
         
         // --- ADDED KEY LISTENER FOR W AND E ---
         scene.setOnKeyPressed(e -> {
@@ -386,7 +390,7 @@ public class GameWindow {
         lblTurnBadge = new Label("TURN INFO");
         styleTurnBadge(lblTurnBadge, "PREPARING...", true);
 
-        bar.getChildren().addAll(title, sub, spacer, topBtnHelp, topBtnSettings, lblTurnBadge);
+        bar.getChildren().addAll(title, sub, spacer, topBtnHelp, topBtnSettings);
         return bar;
     }
 
@@ -700,6 +704,18 @@ public class GameWindow {
                         + "-fx-border-width:1.5;"
                         + "-fx-border-radius:6;-fx-background-radius:6;");
 
+            // NEW: Hover Effects
+            final String hoverColor = colors[1]; 
+
+            pane.setOnMouseEntered(e -> {
+                pane.setTranslateY(-3); // Pop up slightly
+                pane.setEffect(new DropShadow(10, Color.web(hoverColor, 0.8))); // Glow
+            });
+            pane.setOnMouseExited(e -> {
+                pane.setTranslateY(0); // Return to flat
+                pane.setEffect(null); // Remove glow
+            });
+
             Tooltip.install(pane, styledTooltip(tooltip));
 
             VBox content = new VBox(1);
@@ -724,7 +740,19 @@ public class GameWindow {
                 iv = loadIcon(cellIconFile(ec, idx), 50);
             }
 
-            if (iv != null) content.getChildren().add(iv);
+            if (iv != null) {
+                content.getChildren().add(iv);
+                
+                // NEW: If this cell is a Monster Cell, make the monster image breathe!
+                if (ec instanceof MonsterCell) {
+                    ScaleTransition idleM = new ScaleTransition(Duration.millis(1200), iv);
+                    idleM.setByX(0.06); 
+                    idleM.setByY(0.06);
+                    idleM.setAutoReverse(true); 
+                    idleM.setCycleCount(Timeline.INDEFINITE);
+                    idleM.play();
+                }
+            }
             else if (!icon.isEmpty()) {
                 Label iconLbl = new Label(icon);
                 iconLbl.setFont(Font.font("Arial", FontWeight.BOLD, 18));
@@ -751,11 +779,25 @@ public class GameWindow {
                 tokens.setPadding(new Insets(0, 0, 4, 0));
 
                 if (hasPlayer) {
-                    tokens.getChildren().add(buildDynamicAvatar(player, PURPLE, 36));
+                    StackPane pToken = buildDynamicAvatar(player, PURPLE, 36);
+                    tokens.getChildren().add(pToken);
+                    
+                    ScaleTransition idleP = new ScaleTransition(Duration.millis(1200), pToken);
+                    idleP.setByX(0.06); idleP.setByY(0.06);
+                    idleP.setAutoReverse(true); idleP.setCycleCount(Timeline.INDEFINITE);
+                    idleP.play();
                 }
+                
                 if (hasOpp) {
-                    tokens.getChildren().add(buildDynamicAvatar(opponent, GREEN_DIM, 36));
+                    StackPane oToken = buildDynamicAvatar(opponent, GREEN_DIM, 36);
+                    tokens.getChildren().add(oToken);
+                    
+                    ScaleTransition idleO = new ScaleTransition(Duration.millis(1200), oToken);
+                    idleO.setByX(0.06); idleO.setByY(0.06);
+                    idleO.setAutoReverse(true); idleO.setCycleCount(Timeline.INDEFINITE);
+                    idleO.play();
                 }
+                
                 pane.getChildren().add(tokens);
                 StackPane.setAlignment(tokens, Pos.BOTTOM_CENTER);
             }
@@ -789,6 +831,16 @@ public class GameWindow {
         lblPlayerType.setText(p.getClass().getSimpleName());
         lblPlayerEnergy.setText("Energy:  " + p.getEnergy() + "  /  1000");
         barPlayerEnergy.setProgress(Math.min(1.0, p.getEnergy() / 1000.0));
+        
+     // Add Overcharge Glow
+        if (p.getEnergy() >= 1000) {
+            barPlayerEnergy.setEffect(new DropShadow(15, Color.web(GOLD)));
+            // Optional: change the bar color to gold!
+            barPlayerEnergy.setStyle("-fx-accent:" + GOLD + ";-fx-control-inner-background:#ffffff11;");
+        } else {
+            barPlayerEnergy.setEffect(null);
+            barPlayerEnergy.setStyle("-fx-accent:" + PURPLE + ";-fx-control-inner-background:#ffffff11;");
+        }
 
         if (p.isConfused()) {
             Role originalP = (p.getRole() == Role.SCARER) ? Role.LAUGHER : Role.SCARER;
@@ -1598,7 +1650,7 @@ public class GameWindow {
     }
 
     public void notifyCardDrawn(String icon, String cardName, String effect, int remainingPile) {
-        lblCardIcon.setText(icon);
+        lblCardIcon.setText("");
         lblLastCardName.setText(cardName);
         lblLastCardEffect.setText(effect);
         lblPileCount.setText("Deck: " + remainingPile + " cards");
