@@ -420,8 +420,9 @@ public class GameWindow {
         tagPlayerMomentum.setVisible(false); tagPlayerMomentum.setManaged(false);
         tagPlayerFocus.setVisible(false); tagPlayerFocus.setManaged(false);
         
-        FlowTags pTags = new FlowTags(tagPlayerRole, tagPlayerShield, tagPlayerConfusion, tagPlayerFreeze, tagPlayerMomentum, tagPlayerFocus);
-
+        HBox pRoleRow = new HBox(8, tagPlayerRole, tagPlayerShield);
+        HBox pStatusRow = new HBox(8, tagPlayerConfusion, tagPlayerFreeze, tagPlayerMomentum, tagPlayerFocus);
+        
         lblPlayerEnergy = labelOf("", 16, GOLD, true);
         barPlayerEnergy = energyBar(PURPLE);
 
@@ -438,7 +439,7 @@ public class GameWindow {
         cheats.setAlignment(Pos.CENTER);
 
         playerCard.getChildren().addAll(
-                avatarRow, lblPlayerType, pTags.box,
+                avatarRow, lblPlayerType, pRoleRow, pStatusRow,
                 sep(), lblPlayerEnergy, barPlayerEnergy,
                 sep(), btnPlayerPowerup, div, cheats);
 
@@ -558,8 +559,9 @@ public class GameWindow {
         tagOppMomentum.setVisible(false); tagOppMomentum.setManaged(false);
         tagOppFocus.setVisible(false); tagOppFocus.setManaged(false);
         
-        FlowTags oTags = new FlowTags(tagOppRole, tagOppShield, tagOppConfusion, tagOppFreeze, tagOppMomentum, tagOppFocus);
-
+        HBox oRoleRow = new HBox(8, tagOppRole, tagOppShield);
+        HBox oStatusRow = new HBox(8, tagOppConfusion, tagOppFreeze, tagOppMomentum, tagOppFocus);
+        
         lblOppEnergy = labelOf("", 16, GOLD, true);
         barOppEnergy = energyBar(GREEN_DIM);
 
@@ -567,7 +569,7 @@ public class GameWindow {
         btnOppPowerup.setOnAction(e -> handlePowerup());
 
         oppCard.getChildren().addAll(
-                avatarRow, lblOppType, oTags.box,
+                avatarRow, lblOppType, oRoleRow, oStatusRow,
                 sep(), lblOppEnergy, barOppEnergy,
                 sep(), btnOppPowerup);
 
@@ -704,7 +706,24 @@ public class GameWindow {
             content.setAlignment(Pos.TOP_CENTER);
             content.setPadding(new Insets(4, 0, 0, 0)); 
 
-            ImageView iv = loadIcon(cellIconFile(ec, idx), 50);
+         // Dynamically change icon size and add role label if it's a door
+            ImageView iv = null;
+            if (ec instanceof DoorCell) {
+                DoorCell dc = (DoorCell) ec;
+                
+                // Add the "S" or "L" label above the door
+                Label roleLbl = new Label(dc.getRole() == Role.SCARER ? "S" : "L");
+                roleLbl.setFont(Font.font("Arial Black", FontWeight.BOLD, 14));
+                roleLbl.setTextFill(dc.getRole() == Role.SCARER ? Color.web(BLUE_TEXT) : Color.web(GREEN_TEXT));
+                content.getChildren().add(roleLbl);
+                
+                // Load a smaller image (35 instead of 50)
+                iv = loadIcon(cellIconFile(ec, idx), 35);
+            } else {
+                // Keep all other icons at size 50
+                iv = loadIcon(cellIconFile(ec, idx), 50);
+            }
+
             if (iv != null) content.getChildren().add(iv);
             else if (!icon.isEmpty()) {
                 Label iconLbl = new Label(icon);
@@ -781,18 +800,19 @@ public class GameWindow {
         }
         
         setTagVisible(tagPlayerShield,    p.isShielded());
-        setTagVisible(tagPlayerConfusion, p.isConfused(), "[Confused] (" + p.getConfusionTurns() + ")");
-        setTagVisible(tagPlayerFreeze, p.isFrozen());
+        setTagVisible(tagPlayerConfusion, p.isConfused(), "[Confused] Turns: " + p.getConfusionTurns());
+        setTagVisible(tagPlayerFreeze, p.isFrozen(), "[Frozen] Turns: 1");
         
-        // Correctly assign Momentum for Dasher and Focus for MultiTasker for Player
         if (p.getClass().getSimpleName().equals("Dasher")) {
-            setTagVisible(tagPlayerMomentum, ((Dasher) p).getMomentumTurns() > 0); 
+            int mTurns = ((Dasher) p).getMomentumTurns();
+            setTagVisible(tagPlayerMomentum, mTurns > 0, "[Momentum] Turns: " + mTurns); 
         } else {
             setTagVisible(tagPlayerMomentum, false);
         }
         
         if (p.getClass().getSimpleName().equals("MultiTasker")) {
-            setTagVisible(tagPlayerFocus, ((MultiTasker) p).getNormalSpeedTurns() > 0); 
+            int fTurns = ((MultiTasker) p).getNormalSpeedTurns();
+            setTagVisible(tagPlayerFocus, fTurns > 0, "[Focus] Turns: " + fTurns); 
         } else {
             setTagVisible(tagPlayerFocus, false);
         }
@@ -812,18 +832,19 @@ public class GameWindow {
         }
         
         setTagVisible(tagOppShield,    o.isShielded());
-        setTagVisible(tagOppConfusion, o.isConfused(), "[Confused] (" + o.getConfusionTurns() + ")");
-        setTagVisible(tagOppFreeze, o.isFrozen());
+        setTagVisible(tagOppConfusion, o.isConfused(), "[Confused] Turns: " + o.getConfusionTurns());
+        setTagVisible(tagOppFreeze, o.isFrozen(), "[Frozen] Turns: 1");
         
-        // Correctly assign Momentum for Dasher and Focus for MultiTasker for Opponent
         if (o.getClass().getSimpleName().equals("Dasher")) {
-            setTagVisible(tagOppMomentum, ((Dasher) o).getMomentumTurns() > 0); 
+            int mTurns = ((Dasher) o).getMomentumTurns();
+            setTagVisible(tagOppMomentum, mTurns > 0, "[Momentum] Turns: " + mTurns); 
         } else {
             setTagVisible(tagOppMomentum, false);
         }
         
         if (o.getClass().getSimpleName().equals("MultiTasker")) {
-            setTagVisible(tagOppFocus, ((MultiTasker) o).getNormalSpeedTurns() > 0); 
+            int fTurns = ((MultiTasker) o).getNormalSpeedTurns();
+            setTagVisible(tagOppFocus, fTurns > 0, "[Focus] Turns: " + fTurns); 
         } else {
             setTagVisible(tagOppFocus, false);
         }
@@ -991,6 +1012,71 @@ public class GameWindow {
 
         throwAnimation.play();
     }
+    
+    // ======================================================================
+    // Card Animation
+    // ======================================================================
+    private void animateCardDraw(String cardName, String effect, int remainingPile) {
+        // 1. Create the flying card using your existing loadIcon helper
+        ImageView flyingCard = loadIcon("mystery.png", 50);
+        if (flyingCard == null) {
+            // Fallback just in case the image is missing
+            notifyCardDrawn("[CARD]", cardName, effect, remainingPile);
+            return;
+        }
+
+        // Add a deep shadow to make it pop off the board
+        flyingCard.setEffect(new DropShadow(25, Color.BLACK));
+        animationLayer.getChildren().add(flyingCard);
+
+        // 2. Find the starting position (The deck on the right side)
+        javafx.geometry.Bounds deckBounds = lblPileCount.localToScene(lblPileCount.getBoundsInLocal());
+        javafx.geometry.Bounds layerDeck = animationLayer.sceneToLocal(deckBounds);
+        double startX = layerDeck.getMinX();
+        double startY = layerDeck.getMinY() - 50; // Start slightly above the deck text
+
+        // 3. Find the ending position (Center of the board)
+        javafx.geometry.Bounds boardBounds = boardGrid.localToScene(boardGrid.getBoundsInLocal());
+        javafx.geometry.Bounds layerBoard = animationLayer.sceneToLocal(boardBounds);
+        double endX = layerBoard.getMinX() + (layerBoard.getWidth() / 2) - 30;
+        double endY = layerBoard.getMinY() + (layerBoard.getHeight() / 2) - 45;
+
+        flyingCard.setLayoutX(startX);
+        flyingCard.setLayoutY(startY);
+
+        // 4. Create the animations
+        TranslateTransition slide = new TranslateTransition(Duration.millis(700), flyingCard);
+        slide.setToX(endX - startX);
+        slide.setToY(endY - startY);
+        slide.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+
+        // Scale it up massively in the center
+        ScaleTransition grow = new ScaleTransition(Duration.millis(700), flyingCard);
+        grow.setToX(3.5); grow.setToY(3.5); 
+
+        // Spin it wildly like it was thrown
+        javafx.animation.RotateTransition spin = new javafx.animation.RotateTransition(Duration.millis(700), flyingCard);
+        spin.setByAngle(1080); // 3 full spins
+
+        // 5. Play them all at the same time
+        javafx.animation.ParallelTransition fly = new javafx.animation.ParallelTransition(slide, grow, spin);
+
+        fly.setOnFinished(e -> {
+            // When it lands, trigger your existing UI update method!
+            notifyCardDrawn("[CARD]", cardName, effect, remainingPile);
+
+            // Leave it on the board for 1.2 seconds, then fade it out
+            Timeline pause = new Timeline(new KeyFrame(Duration.millis(1200), ev -> {
+                FadeTransition fadeOut = new FadeTransition(Duration.millis(300), flyingCard);
+                fadeOut.setToValue(0);
+                fadeOut.setOnFinished(ev2 -> animationLayer.getChildren().remove(flyingCard));
+                fadeOut.play();
+            }));
+            pause.play();
+        });
+
+        fly.play();
+    }
 
     private void executeMove(int roll) {
         Monster current = game.getCurrent();
@@ -1019,7 +1105,7 @@ public class GameWindow {
             // CORRECTED: Deck size logic now correctly detects card draw even if deck reshuffles
             if ((deckSizeAfter < deckSizeBefore || deckSizeAfter > deckSizeBefore + 20) && expectedCard != null) {
                 playSound("whoosh.wav"); 
-                notifyCardDrawn("[CARD]", expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
+                animateCardDraw(expectedCard.getName(), expectedCard.getDescription(), deckSizeAfter);
             }
 
             // CORRECTED: Verify if shield was consumed to block a hit and display visual feedback
@@ -1317,15 +1403,12 @@ public class GameWindow {
 
     private void showError(String title, String msg) {
         playSound("error.mp3"); shakeScreen();
-        Stage pop = new Stage();
-        // Don't use initOwner — it hides behind fullscreen on Windows
-        pop.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-        pop.initStyle(StageStyle.UTILITY);
-        pop.setAlwaysOnTop(true);
 
         VBox layout = new VBox(18);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(38, 46, 38, 46));
+        layout.setMaxWidth(480);
+        layout.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
         layout.setStyle("-fx-background-color:linear-gradient(to bottom right,#1a0a2e,#0a0a0f);"
                       + "-fx-border-color:" + RED + ";-fx-border-width:2;"
                       + "-fx-border-radius:14;-fx-background-radius:14;"
@@ -1342,20 +1425,29 @@ public class GameWindow {
         body.setWrapText(true); body.setMaxWidth(400);
         body.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
+        StackPane overlayPane = new StackPane(layout);
+        overlayPane.setStyle("-fx-background-color:rgba(0,0,0,0.75);");
+
         Button ok = actionButton("CONTINUE", GOLD, "#1a0a00");
         ok.setPrefWidth(180);
+        
+        // Remove overlay when clicked
         ok.setOnAction(e -> {
-            FadeTransition ft = new FadeTransition(Duration.millis(180), layout);
-            ft.setToValue(0); ft.setOnFinished(ev -> pop.close()); ft.play();
+            FadeTransition ft = new FadeTransition(Duration.millis(180), overlayPane);
+            ft.setToValue(0); ft.setOnFinished(ev -> rootOverlay.getChildren().remove(overlayPane)); ft.play();
         });
 
         layout.getChildren().addAll(head, body, ok);
-        StackPane errRoot = new StackPane(layout);
-        errRoot.setStyle("-fx-background-color: #0a0a1a;");
-        Scene sc = new Scene(errRoot);
-        pop.setTitle(title);
-        fadeInLayout(layout);
-        pop.setScene(sc); pop.show();
+        
+        // Spawn inside the main game window
+        overlayPane.setOpacity(0);
+        rootOverlay.getChildren().add(overlayPane);
+
+        // Slide down and fade in animation
+        layout.setTranslateY(24);
+        FadeTransition ft = new FadeTransition(Duration.millis(260), overlayPane); ft.setToValue(1);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(260), layout); tt.setToY(0);
+        ft.play(); tt.play();
     }
 
     // ======================================================================
